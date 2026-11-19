@@ -1,12 +1,26 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export', // Включает генерацию статических файлов в папку out/
-  images: {
-    unoptimized: true // Отключает серверную оптимизацию изображений
+  async headers() {
+    return [
+      {
+        // Apply to all pages in the app
+        source: "/:path*",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            // Allow any site to embed this page in an <iframe>
+            value: "frame-ancestors *;",
+          },
+          // NOTE: X-Frame-Options is legacy and does not support a wildcard;
+          // if your platform injects X-Frame-Options: SAMEORIGIN you may need
+          // to remove/override it via platform settings.
+        ],
+      },
+    ];
   },
-  // Обязательно добавьте, если сайт будет открываться по адресу username.github.io/orientir/
-  basePath: '/orientir',
-  assetPrefix: '/orientir/'
+  images: {
+    remotePatterns: [],
+  },
 };
 
 export default nextConfig;
