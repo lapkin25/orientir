@@ -1,4 +1,0 @@
-:HL["/orientir/_next/static/chunks/0kre_37mphsn~.css","style"]
-:HL["/orientir/_next/static/media/GeistMono_Variable.p.0x4.uoej0_y_b.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
-:HL["/orientir/_next/static/media/Geist_Variable-s.p.17t5-sg0s7xek.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}},"staleTime":300,"buildId":"cIO7mH0gd4CJ8L3W2qpxf"}

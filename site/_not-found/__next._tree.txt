@@ -1,2 +1,0 @@
-:HL["/orientir/_next/static/chunks/0kre_37mphsn~.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"/_not-found","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"cIO7mH0gd4CJ8L3W2qpxf"}
