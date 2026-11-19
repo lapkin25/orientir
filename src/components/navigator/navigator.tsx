@@ -356,6 +356,7 @@ export function Navigator({ places }: { places: Place[] }) {
         onPick={(place) => {
           clearResult();
           setTo(place);
+          setResetKey((key) => key + 1);
         }}
       />
     </div>
