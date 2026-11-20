@@ -31,6 +31,8 @@ import {
   type RouteResult,
   type StepIcon,
 } from "@/lib/navigator/graph";
+import { MicroMapCorridor } from "@/components/navigator/micro-map-corridor";
+import { MicroMapSquare } from "@/components/navigator/micro-map-square";
 import { cn } from "@/lib/utils";
 
 const STEP_ICONS: Record<StepIcon, LucideIcon> = {
@@ -157,6 +159,41 @@ function PlaceField({
   );
 }
 
+function RouteStepItem({ step }: { step: RouteResult["steps"][number] }) {
+  const Icon = STEP_ICONS[step.icon];
+  return (
+    <li className="flex gap-3">
+      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <Icon className="h-4 w-4" aria-hidden />
+      </span>
+      <div className="min-w-0 flex-1 space-y-1.5">
+        <p className="text-sm leading-snug">{step.text}</p>
+        {step.detail && (
+          <p className="text-xs text-muted-foreground">{step.detail}</p>
+        )}
+        {step.map?.kind === "square" && <MicroMapSquare map={step.map} />}
+        {step.map?.kind === "corridor" && <MicroMapCorridor map={step.map} />}
+        {step.photo && (
+          <figure className="space-y-1">
+            <Image
+              src={`/${step.photo}`}
+              alt={step.photoNote ?? ""}
+              width={640}
+              height={360}
+              className="w-full max-w-sm rounded-lg border object-cover"
+            />
+            {step.photoNote && (
+              <figcaption className="text-xs text-muted-foreground">
+                {step.photoNote}
+              </figcaption>
+            )}
+          </figure>
+        )}
+      </div>
+    </li>
+  );
+}
+
 function RouteCard({ result }: { result: RouteResult }) {
   return (
     <Card>
@@ -176,38 +213,9 @@ function RouteCard({ result }: { result: RouteResult }) {
           </div>
         </div>
         <ol className="space-y-3">
-          {result.steps.map((step, index) => {
-            const Icon = STEP_ICONS[step.icon];
-            return (
-              <li key={index} className="flex gap-3">
-                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <Icon className="h-4 w-4" aria-hidden />
-                </span>
-                <div className="min-w-0 flex-1 space-y-1.5">
-                  <p className="text-sm leading-snug">{step.text}</p>
-                  {step.detail && (
-                    <p className="text-xs text-muted-foreground">{step.detail}</p>
-                  )}
-                  {step.photo && (
-                    <figure className="space-y-1">
-                      <Image
-                        src={`/${step.photo}`}
-                        alt={step.photoNote ?? ""}
-                        width={640}
-                        height={360}
-                        className="w-full max-w-sm rounded-lg border object-cover"
-                      />
-                      {step.photoNote && (
-                        <figcaption className="text-xs text-muted-foreground">
-                          {step.photoNote}
-                        </figcaption>
-                      )}
-                    </figure>
-                  )}
-                </div>
-              </li>
-            );
-          })}
+          {result.steps.map((step, index) => (
+            <RouteStepItem key={index} step={step} />
+          ))}
         </ol>
       </CardContent>
     </Card>

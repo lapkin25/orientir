@@ -22,12 +22,33 @@ export type StepIcon =
   | "stairs-down"
   | "finish";
 
+// Данные микро-карты для шага маршрута: площадка со сторонами
+// или коридор с ориентирами вдоль стен.
+export interface SquareMapData {
+  kind: "square";
+  square: ParsedSquare;
+  // Сторона, с которой пользователь вошёл на площадку; "" — старт маршрута.
+  standSide: Dir | "";
+  turn: "straight" | "left" | "right" | "back";
+}
+
+export interface CorridorMapData {
+  kind: "corridor";
+  corridor: ParsedCorridor;
+  // true — движение от начала коридора к его концу.
+  forward: boolean;
+  endLabel: string;
+}
+
+export type StepMap = SquareMapData | CorridorMapData;
+
 export interface RouteStep {
   icon: StepIcon;
   text: string;
   detail?: string;
   photo?: string;
   photoNote?: string;
+  map?: StepMap;
 }
 
 export interface RouteResult {
@@ -405,10 +426,17 @@ function buildSteps(graph: Graph, path: number[]): RouteStep[] {
             ? `коридору ${name.slice("коридор ".length)}`
             : name
         : "коридору";
+      const target = exitTarget(exitV);
       steps.push({
         icon: "straight",
-        text: `Пройдите прямо по ${where} до ${exitTarget(exitV)}.`,
+        text: `Пройдите прямо по ${where} до ${target}.`,
         detail: landmarkDetail(graph, idx, new Set([entryIdx, exitIdx]), forward),
+        map: {
+          kind: "corridor",
+          corridor: v.square,
+          forward,
+          endLabel: target,
+        },
       });
       continue;
     }
@@ -436,6 +464,18 @@ function buildSteps(graph: Graph, path: number[]): RouteStep[] {
       detail: landmarkDetail(graph, idx, new Set([entryIdx, exitIdx]), true),
       photo,
       photoNote: photo ? "Зона отдыха на 4 этаже" : undefined,
+      map:
+        v.square && v.square.kind === "square"
+          ? {
+              kind: "square",
+              square: v.square,
+              standSide: entryV ? entryV.side : "",
+              turn:
+                icon === "left" || icon === "right" || icon === "back"
+                  ? icon
+                  : "straight",
+            }
+          : undefined,
     });
   }
 
