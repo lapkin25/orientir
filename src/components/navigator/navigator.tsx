@@ -31,6 +31,7 @@ import {
   type RouteResult,
   type StepIcon,
 } from "@/lib/navigator/graph";
+import { ContentMap } from "@/components/navigator/content-map";
 import { MicroMapCorridor } from "@/components/navigator/micro-map-corridor";
 import { MicroMapSquare } from "@/components/navigator/micro-map-square";
 import { cn } from "@/lib/utils";
@@ -365,6 +366,15 @@ export function Navigator({ places }: { places: Place[] }) {
           {error && <p className="text-sm text-destructive">{error}</p>}
         </CardContent>
       </Card>
+
+      <ContentMap
+        places={places}
+        onSelect={(place) => {
+          clearResult();
+          setTo(place);
+          setResetKey((key) => key + 1);
+        }}
+      />
 
       {hasResult && <RouteCard result={result} />}
 
