@@ -12,7 +12,6 @@ const eslintConfig = [
       "out/**/*",
       "dist/**/*",
       "build/**/*",
-      ".agent-runtime/**/*",
     ],
   },
   {

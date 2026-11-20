@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   ArrowDownToLine,
   ArrowRight,
@@ -246,7 +247,15 @@ function Catalog({
         <Card className="mt-2">
           <CardContent className="max-h-80 space-y-4 overflow-y-auto p-4">
             <p className="text-xs text-muted-foreground">
-              Нажмите на точку, чтобы выбрать её пунктом назначения.
+              Нажмите на точку, чтобы выбрать её пунктом назначения. Полный
+              список —{" "}
+              <Link
+                href="/directory"
+                className="underline underline-offset-2 hover:text-foreground"
+              >
+                в справочнике
+              </Link>
+              .
             </p>
             {floors.map(([floor, list]) => (
               <div key={floor}>
