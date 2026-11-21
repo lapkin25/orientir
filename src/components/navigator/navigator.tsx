@@ -14,6 +14,27 @@ import { MicroMapSquare } from "@/components/navigator/micro-map-square";
 import { MicroMapStairs } from "@/components/navigator/micro-map-stairs";
 import { cn } from "@/lib/utils";
 
+const STORAGE_KEY = "orientir:selection";
+
+function readSaved(): { from?: string; to?: string } {
+  try {
+    return JSON.parse(sessionStorage.getItem(STORAGE_KEY) ?? "{}");
+  } catch {
+    return {};
+  }
+}
+
+function saveSelection(from: Place | null, to: Place | null) {
+  try {
+    sessionStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ from: from?.id, to: to?.id })
+    );
+  } catch {
+    // Хранилище может быть недоступно (приватный режим) — просто не запоминаем.
+  }
+}
+
 function subscribeToLocation(onChange: () => void): () => void {
   window.addEventListener("popstate", onChange);
   return () => window.removeEventListener("popstate", onChange);
@@ -254,25 +275,27 @@ export function Navigator({ places }: { places: Place[] }) {
   const [resetKey, setResetKey] = useState(0);
   const hasResult = result !== null;
 
-  // Точку из справочника подставляем по адресу вида /?to=… уже в браузере:
-  // так главная страница остаётся статической, а начальный рендер
-  // на сервере и в браузере совпадает.
+  // Точки из адреса (/?from=…, /?to=…) и ранее выбранные точки подставляем
+  // только после гидратации: снимок сервера отличается от снимка браузера,
+  // поэтому начальный рендер совпадает, а чтение хранилища идёт уже в браузере.
   const search = useSyncExternalStore(
     subscribeToLocation,
-    () => window.location.search,
-    () => ""
+    () => `client:${window.location.search}`,
+    () => "server"
   );
-  const [appliedSearch, setAppliedSearch] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("server");
   if (search !== appliedSearch) {
     setAppliedSearch(search);
-    const params = new URLSearchParams(search);
-    const pick = (id: string | null) =>
+    const params = new URLSearchParams(search.slice("client:".length));
+    const saved = readSaved();
+    const pick = (id: string | null | undefined) =>
       id ? (places.find((place) => place.id === id) ?? null) : null;
-    const nextFrom = pick(params.get("from"));
-    const nextTo = pick(params.get("to"));
-    if (nextFrom || nextTo) {
-      if (nextFrom) setFrom(nextFrom);
-      if (nextTo) setTo(nextTo);
+    const nextFrom = pick(params.get("from")) ?? pick(saved.from) ?? from;
+    const nextTo = pick(params.get("to")) ?? pick(saved.to) ?? to;
+    if (nextFrom !== from || nextTo !== to) {
+      setFrom(nextFrom);
+      setTo(nextTo);
+      saveSelection(nextFrom, nextTo);
       setResetKey((key) => key + 1);
     }
   }
@@ -281,6 +304,7 @@ export function Navigator({ places }: { places: Place[] }) {
     if (hasResult) {
       setFrom(null);
       setTo(null);
+      saveSelection(null, null);
       setResult(null);
       setError(null);
       setResetKey((key) => key + 1);
@@ -319,6 +343,7 @@ export function Navigator({ places }: { places: Place[] }) {
               selected={from}
               onSelect={(place) => {
                 setFrom(place);
+                saveSelection(place, to);
                 setError(null);
               }}
               onSubmit={submit}
@@ -331,6 +356,7 @@ export function Navigator({ places }: { places: Place[] }) {
               selected={to}
               onSelect={(place) => {
                 setTo(place);
+                saveSelection(from, place);
                 setError(null);
               }}
               onSubmit={submit}
