@@ -11,6 +11,7 @@ const KIND_LABELS: Record<PlaceKind, string> = {
   orient: "Ориентир",
   square: "Площадка",
   corridor: "Коридор",
+  section: "Отсек",
 };
 
 interface ContentMapProps {
