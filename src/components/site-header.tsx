@@ -9,7 +9,7 @@ export function SiteLogo() {
   return (
     <div className="mx-auto w-[70%] max-w-xs py-8">
       <Image
-        src="vvsu-logo.svg"
+        src="/orientir/vvsu-logo.svg"
         alt="ВВГУ"
         width={249}
         height={81}
