@@ -7,7 +7,7 @@ export type Dir = "forward" | "backward" | "left" | "right";
 export const DIRECTIONS: Dir[] = ["forward", "backward", "left", "right"];
 
 export type SideObject =
-  | { kind: "joint"; id: string; text: string; to: string }
+  | { kind: "joint"; id: string; text: string; to: string; photo: string }
   | { kind: "orient"; type: string; name: string; to: string }
   | { kind: "room"; num: string; name: string; to: string };
 
@@ -44,15 +44,18 @@ export interface ParsedCorridor {
   objects: CorridorObject[];
 }
 
+// Лестница — площадка между двумя стыками на разных этажах:
+// <Stairs id="…" start_id="…" finish_id="…"/>. Подписи и фотографии
+// хранятся в атрибутах самих стыков.
 export interface ParsedStairs {
   kind: "stairs";
   id: string;
-  joint: string;
-  floorDown: number;
-  floorUp: number;
+  startId: string;
+  finishId: string;
   building: string;
-  textUp: string;
-  textDown: string;
+  // Необязательные подробности для путевой карточки.
+  railing: string;
+  width: string;
 }
 
 export interface ParsedPlan {
@@ -130,6 +133,7 @@ function readSideObject(element: XmlElement): SideObject | null {
       id: attr(element, "id"),
       text: attr(element, "text"),
       to: attr(element, "to"),
+      photo: attr(element, "photo"),
     };
   }
   if (element.tag === "Orient") {
@@ -221,16 +225,21 @@ function readCorridor(
   };
 }
 
-function readStairs(element: XmlElement, building: string): ParsedStairs {
+// Без обоих концов лестница разорвала бы маршрут, поэтому такую не берём.
+function readStairs(element: XmlElement, building: string): ParsedStairs | null {
+  const startId = attr(element, "start_id").trim();
+  const finishId = attr(element, "finish_id").trim();
+  if (!startId || !finishId || startId === finishId) {
+    return null;
+  }
   return {
     kind: "stairs",
-    id: attr(element, "id"),
-    joint: attr(element, "joint"),
-    floorDown: parseFloor(attr(element, "floor_down"), Number.NaN),
-    floorUp: parseFloor(attr(element, "floor_up"), Number.NaN),
+    id: attr(element, "id") || `${startId}-${finishId}`,
+    startId,
+    finishId,
     building: attr(element, "building") || building,
-    textUp: attr(element, "text_up"),
-    textDown: attr(element, "text_down"),
+    railing: attr(element, "railing"),
+    width: attr(element, "width"),
   };
 }
 
@@ -252,7 +261,10 @@ function readBlock(
     } else if (child.tag === "Corridor") {
       plan.corridors.push(readCorridor(child, blockBuilding, blockFloor));
     } else if (child.tag === "Stairs") {
-      plan.stairs.push(readStairs(child, blockBuilding));
+      const stairs = readStairs(child, blockBuilding);
+      if (stairs) {
+        plan.stairs.push(stairs);
+      }
     }
   }
 }

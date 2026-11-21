@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -35,6 +35,7 @@ import { ContentMap } from "@/components/navigator/content-map";
 import { MacroMap } from "@/components/navigator/macro-map";
 import { MicroMapCorridor } from "@/components/navigator/micro-map-corridor";
 import { MicroMapSquare } from "@/components/navigator/micro-map-square";
+import { MicroMapStairs } from "@/components/navigator/micro-map-stairs";
 import { cn } from "@/lib/utils";
 
 const STEP_ICONS: Record<StepIcon, LucideIcon> = {
@@ -47,6 +48,11 @@ const STEP_ICONS: Record<StepIcon, LucideIcon> = {
   "stairs-down": ArrowDownToLine,
   finish: MapPin,
 };
+
+function subscribeToLocation(onChange: () => void): () => void {
+  window.addEventListener("popstate", onChange);
+  return () => window.removeEventListener("popstate", onChange);
+}
 
 interface PlaceFieldProps {
   id: string;
@@ -184,6 +190,7 @@ function RouteStepItem({
           <MacroMap neighbors={step.map.macro} />
         )}
         {step.map?.kind === "corridor" && <MicroMapCorridor map={step.map} />}
+        {step.map?.kind === "stairs" && <MicroMapStairs map={step.map} />}
         {step.photo && (
           <figure className="space-y-1">
             <Image
@@ -317,19 +324,25 @@ export function Navigator({ places }: { places: Place[] }) {
   // Точку из каталога подставляем по адресу вида /?to=… уже в браузере:
   // так главная страница остаётся статической, а начальный рендер
   // на сервере и в браузере совпадает.
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+  const search = useSyncExternalStore(
+    subscribeToLocation,
+    () => window.location.search,
+    () => ""
+  );
+  const [appliedSearch, setAppliedSearch] = useState("");
+  if (search !== appliedSearch) {
+    setAppliedSearch(search);
+    const params = new URLSearchParams(search);
     const pick = (id: string | null) =>
       id ? (places.find((place) => place.id === id) ?? null) : null;
     const nextFrom = pick(params.get("from"));
     const nextTo = pick(params.get("to"));
-    if (!nextFrom && !nextTo) {
-      return;
+    if (nextFrom || nextTo) {
+      if (nextFrom) setFrom(nextFrom);
+      if (nextTo) setTo(nextTo);
+      setResetKey((key) => key + 1);
     }
-    if (nextFrom) setFrom(nextFrom);
-    if (nextTo) setTo(nextTo);
-    setResetKey((key) => key + 1);
-  }, [places]);
+  }
 
   const clearResult = () => {
     setResult(null);

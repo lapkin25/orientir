@@ -111,11 +111,6 @@ export const planXML = `<Plan object="VVSU">
                     <Joint id="8" text="Лестница" to="лестницы"/>
                 </Side>
             </Square>
-            <Stairs id="stairs_up_1" joint="1" floor_down="3" floor_up="4" building="1" text_up="Поднимитесь на 4 этаж" text_down="Спуститесь на 3 этаж"/>
-            <Stairs id="stairs_down_1" joint="1" floor_down="4" floor_up="5" building="1" text_up="Поднимитесь на 5 этаж" text_down="Спуститесь на 4 этаж"/>
-            <Stairs id="stairs_up_2" joint="7" floor_down="3" floor_up="4" building="1" text_up="Поднимитесь на 4 этаж" text_down="Спуститесь на 3 этаж"/>
-            <Stairs id="stairs_down_2" joint="7" floor_down="4" floor_up="5" building="1" text_up="Поднимитесь на 5 этаж" text_down="Спуститесь на 4 этаж"/>
-            <Stairs id="stairs_landing_2" joint="8" floor_down="4" floor_up="4" building="1" text_up="" text_down=""/>
         </Block>
         <Block floor="2" building="1">
             <Square id="landing_201" name="Лестничная площадка" to="лестничной площадки">
@@ -267,5 +262,7 @@ export const planXML = `<Plan object="VVSU">
                 <Room wall="left" num="1378"/>
             </Corridor>
         </Block>
+        <Stairs id="staircase_2_3" start_id="201" finish_id="301" building="1"/>
+        <Stairs id="staircase_3_4" start_id="302" finish_id="1" building="1"/>
     </Block>
 </Plan>`;

@@ -51,7 +51,19 @@ export interface CorridorMapData {
   endLabel: string;
 }
 
-export type StepMap = SquareMapData | CorridorMapData;
+// Вертикальная микро-карта лестницы: направление считается
+// сравнением этажей стыков, через которые пользователь идёт.
+export interface StairsMapData {
+  kind: "stairs";
+  stairs: ParsedStairs;
+  fromFloor: number;
+  toFloor: number;
+  direction: "up" | "down";
+  label: string;
+  photo?: string;
+}
+
+export type StepMap = SquareMapData | CorridorMapData | StairsMapData;
 
 export interface RouteStep {
   icon: StepIcon;
@@ -94,6 +106,7 @@ interface Vertex {
   parentSquare: number;
   side: SideMark;
   jointId: string;
+  jointPhoto?: string;
   square?: ParsedSquare | ParsedCorridor;
   object?: SideObject;
   stairs?: ParsedStairs;
@@ -246,6 +259,7 @@ function buildGraph(): Graph {
               parentSquare: squareIdx,
               side: side.dir,
               jointId: obj.id,
+              jointPhoto: obj.photo || undefined,
             });
             const list = jointsById.get(obj.id) ?? [];
             list.push(jointIdx);
@@ -286,17 +300,28 @@ function buildGraph(): Graph {
     }
   }
 
-  // Лестницы соединяют стыки соседних этажей.
+  // Лестница соединяет два стыка на разных этажах. Если один из стыков
+  // не найден или оба на одном этаже, лестницу пропускаем, чтобы
+  // в графе не появилось тупиков и ложных переходов.
   for (const stairs of plan.stairs) {
-    const lo = Math.min(stairs.floorDown, stairs.floorUp);
-    const hi = Math.max(stairs.floorDown, stairs.floorUp);
-    const hasFloors = Number.isFinite(lo) && Number.isFinite(hi);
+    const starts = jointsById.get(stairs.startId);
+    const finishes = jointsById.get(stairs.finishId);
+    if (!starts || !finishes) continue;
+    const startFloor = vertices[starts[0]].floor;
+    const finishFloor = vertices[finishes[0]].floor;
+    if (
+      !Number.isFinite(startFloor) ||
+      !Number.isFinite(finishFloor) ||
+      startFloor === finishFloor
+    ) {
+      continue;
+    }
     const stairsIdx = addVertex({
       key: `st:${stairs.id}`,
       kind: "stairs",
       label: stairs.id,
       to: "",
-      floor: hasFloors ? lo : Number.NaN,
+      floor: Math.min(startFloor, finishFloor),
       neighbors: [],
       inCatalog: false,
       parentSquare: -1,
@@ -304,11 +329,7 @@ function buildGraph(): Graph {
       jointId: "",
       stairs,
     });
-    const list = jointsById.get(stairs.joint);
-    if (!list) continue;
-    for (const jointIdx of list) {
-      const floor = vertices[jointIdx].floor;
-      if (hasFloors && !(floor >= lo && floor <= hi)) continue;
+    for (const jointIdx of [...starts, ...finishes]) {
       connect(stairsIdx, jointIdx);
     }
   }
@@ -470,6 +491,10 @@ function landmarkDetail(
   return `мимо: ${ordered.map((i) => graph.vertices[i].label).join(", ")}`;
 }
 
+function floorPhrase(floor: number): string {
+  return floor <= 0 ? "в цоколь" : `на ${floor} этаж`;
+}
+
 function buildSteps(graph: Graph, path: number[]): RouteStep[] {
   const V = graph.vertices;
   const steps: RouteStep[] = [];
@@ -483,29 +508,26 @@ function buildSteps(graph: Graph, path: number[]): RouteStep[] {
     const v = V[idx];
 
     if (v.kind === "stairs") {
-      const st = v.stairs!;
+      // Лестница всегда стоит в пути между двумя стыками разных этажей.
       const prevV = V[path[t - 1]];
-      const nextV = t + 1 < path.length ? V[path[t + 1]] : null;
-      const up = nextV
-        ? nextV.floor > prevV.floor
-        : st.floorUp > st.floorDown;
-      const equalFloors = nextV ? nextV.floor === prevV.floor : st.floorUp === st.floorDown;
-      const text = equalFloors
-        ? "Пройдите по лестничному переходу"
-        : up
-          ? st.textUp || `Поднимитесь по лестнице на ${st.floorUp} этаж`
-          : st.textDown || `Спуститесь по лестнице на ${st.floorDown} этаж`;
-      let photo: string | undefined;
-      let photoNote: string | undefined;
-      if (!equalFloors && up && nextV && nextV.floor === 5) {
-        photo = "images/plan/5/escalator_forward.jpg";
-        photoNote = "Эскалатор на 5 этаже";
-      }
+      const nextV = V[path[t + 1]];
+      if (!prevV || !nextV) continue;
+      const up = nextV.floor > prevV.floor;
+      const label = up
+        ? `Подъём ${floorPhrase(nextV.floor)}`
+        : `Спуск ${floorPhrase(nextV.floor)}`;
       steps.push({
-        icon: equalFloors ? "straight" : up ? "stairs-up" : "stairs-down",
-        text: `${text}.`,
-        photo,
-        photoNote,
+        icon: up ? "stairs-up" : "stairs-down",
+        text: `${up ? "Поднимитесь" : "Спуститесь"} по лестнице ${floorPhrase(nextV.floor)}.`,
+        map: {
+          kind: "stairs",
+          stairs: v.stairs!,
+          fromFloor: prevV.floor,
+          toFloor: nextV.floor,
+          direction: up ? "up" : "down",
+          label,
+          photo: prevV.jointPhoto ?? nextV.jointPhoto,
+        },
       });
       continue;
     }
@@ -521,7 +543,7 @@ function buildSteps(graph: Graph, path: number[]): RouteStep[] {
     if (v.square && v.square.kind === "corridor") {
       const forward = corridorForward(graph, idx, entryIdx, exitIdx);
       const name = v.square.name;
-      const where = name
+      const where = name && name !== "Коридор"
         ? name.startsWith("Коридор ")
           ? `Коридору ${name.slice("Коридор ".length)}`
           : name.startsWith("коридор ")
