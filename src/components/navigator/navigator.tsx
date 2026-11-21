@@ -2,10 +2,21 @@
 
 import { useMemo, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
-import { ArrowRight, EllipsisVertical, Search } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  EllipsisVertical,
+  Map as MapIcon,
+  MapPin,
+  Search,
+} from "lucide-react";
 import {
   findRoute,
+  type NodeLandmark,
   type Place,
+  type RouteNode,
   type RouteResult,
 } from "@/lib/navigator/graph";
 import { MacroMap } from "@/components/navigator/macro-map";
@@ -164,6 +175,82 @@ function PlaceField({
 const STEP_BUTTON =
   "flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-expanded:text-accent";
 
+const DIRECTION_ICON = {
+  forward: ArrowUp,
+  left: ArrowLeft,
+  right: ArrowRight,
+  back: ArrowDown,
+} as const;
+
+const DIRECTION_LABEL: Record<NodeLandmark["direction"], string> = {
+  forward: "впереди",
+  left: "слева",
+  right: "справа",
+  back: "позади",
+};
+
+function RouteNodeCard({ node }: { node: RouteNode }) {
+  const [schemeOpen, setSchemeOpen] = useState(false);
+  if (node.landmarks.length === 0 && !node.scheme) return null;
+
+  return (
+    <div className="mt-2 rounded-[10px] border-2 border-primary/80 bg-card px-3 py-2">
+      <div className="flex items-center justify-between gap-2">
+        <p className="flex items-center gap-2 text-lg">
+          <MapPin className="h-5 w-5 shrink-0 text-primary" aria-hidden />
+          <span>
+            Узловая точка: {node.name}
+            <span className="text-white/70">, {node.floor} этаж</span>
+          </span>
+        </p>
+        {node.scheme && (
+          <button
+            type="button"
+            aria-label="Путевая схема"
+            title="Путевая схема"
+            aria-expanded={schemeOpen}
+            onClick={() => setSchemeOpen((v) => !v)}
+            className={STEP_BUTTON}
+          >
+            <MapIcon className="h-7 w-7" strokeWidth={2} aria-hidden />
+          </button>
+        )}
+      </div>
+      {node.landmarks.length > 0 && (
+        <ul aria-label="Ближайшие ориентиры" className="mt-1 space-y-1">
+          {node.landmarks.map((item) => {
+            const Icon = DIRECTION_ICON[item.direction];
+            return (
+              <li
+                key={`${item.direction}-${item.label}`}
+                className="flex items-center gap-2 text-lg leading-snug"
+              >
+                <Icon className="h-5 w-5 shrink-0 text-accent" aria-hidden />
+                <span>
+                  {item.label}
+                  <span className="text-white/70">
+                    {" — "}
+                    {DIRECTION_LABEL[item.direction]}
+                  </span>
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {schemeOpen && node.scheme && (
+        <Image
+          src={`/${node.scheme}`}
+          alt={`Путевая схема: ${node.name}`}
+          width={640}
+          height={360}
+          className="mt-2 w-full rounded-[10px] object-cover"
+        />
+      )}
+    </div>
+  );
+}
+
 function RouteStepItem({
   step,
   arrived = false,
@@ -207,6 +294,7 @@ function RouteStepItem({
           </button>
         )}
       </div>
+      {step.node && <RouteNodeCard node={step.node} />}
       {photoOpen && step.photo && (
         <figure className="mt-1 space-y-1 border-l-2 border-accent px-2 py-1">
           <Image
