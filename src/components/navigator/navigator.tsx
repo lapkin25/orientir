@@ -32,6 +32,7 @@ import {
   type StepIcon,
 } from "@/lib/navigator/graph";
 import { ContentMap } from "@/components/navigator/content-map";
+import { MacroMap } from "@/components/navigator/macro-map";
 import { MicroMapCorridor } from "@/components/navigator/micro-map-corridor";
 import { MicroMapSquare } from "@/components/navigator/micro-map-square";
 import { cn } from "@/lib/utils";
@@ -160,7 +161,13 @@ function PlaceField({
   );
 }
 
-function RouteStepItem({ step }: { step: RouteResult["steps"][number] }) {
+function RouteStepItem({
+  step,
+  arrived = false,
+}: {
+  step: RouteResult["steps"][number];
+  arrived?: boolean;
+}) {
   const Icon = STEP_ICONS[step.icon];
   return (
     <li className="flex gap-3">
@@ -173,6 +180,9 @@ function RouteStepItem({ step }: { step: RouteResult["steps"][number] }) {
           <p className="text-xs text-muted-foreground">{step.detail}</p>
         )}
         {step.map?.kind === "square" && <MicroMapSquare map={step.map} />}
+        {step.map?.kind === "square" && step.map.macro && !arrived && (
+          <MacroMap neighbors={step.map.macro} />
+        )}
         {step.map?.kind === "corridor" && <MicroMapCorridor map={step.map} />}
         {step.photo && (
           <figure className="space-y-1">
@@ -215,7 +225,11 @@ function RouteCard({ result }: { result: RouteResult }) {
         </div>
         <ol className="space-y-3">
           {result.steps.map((step, index) => (
-            <RouteStepItem key={index} step={step} />
+            <RouteStepItem
+              key={index}
+              step={step}
+              arrived={index === result.steps.length - 2}
+            />
           ))}
         </ol>
       </CardContent>

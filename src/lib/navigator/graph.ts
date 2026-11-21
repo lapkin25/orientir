@@ -22,6 +22,16 @@ export type StepIcon =
   | "stairs-down"
   | "finish";
 
+// Соседняя зона для макро-карты «Основные направления»:
+// куда можно выйти с площадки и что там приметного.
+export interface MacroNeighbor {
+  id: string;
+  type: "square" | "corridor";
+  name: string;
+  direction: "forward" | "left" | "right";
+  landmarks: string[];
+}
+
 // Данные микро-карты для шага маршрута: площадка со сторонами
 // или коридор с ориентирами вдоль стен.
 export interface SquareMapData {
@@ -30,6 +40,7 @@ export interface SquareMapData {
   // Сторона, с которой пользователь вошёл на площадку; "" — старт маршрута.
   standSide: Dir | "";
   turn: "straight" | "left" | "right" | "back";
+  macro?: MacroNeighbor[];
 }
 
 export interface CorridorMapData {
@@ -64,6 +75,8 @@ export interface Place {
   name: string;
   kind: PlaceKind;
   floor: number;
+  // Где точку искать: зона и сторона, например «Лестничная площадка № 1, впереди».
+  description?: string;
 }
 
 type SideMark = Dir | "";
@@ -169,7 +182,13 @@ function buildGraph(): Graph {
     const squareIdx = addVertex({
       key: `sq:${square.id}`,
       kind: "square",
-      label: uniqueLabel(square.name, squareContext(square)),
+      // Безымянные коридоры «Коридор» на разных этажах различаем этажом в названии.
+      label: uniqueLabel(
+        square.kind === "corridor" && square.name === "Коридор"
+          ? `Коридор на ${square.floor} этаже`
+          : square.name,
+        squareContext(square)
+      ),
       to: square.to,
       floor: square.floor,
       neighbors: [],
@@ -307,8 +326,35 @@ function getGraph(): Graph {
 export function listPlaces(): Place[] {
   const graph = getGraph();
   const places: Place[] = [];
+  const sidePhrase = (side: SideMark, corridor: boolean): string => {
+    if (corridor) {
+      return side === "left"
+        ? "по левую руку"
+        : side === "right"
+          ? "по правую руку"
+          : "";
+    }
+    return side === "forward"
+      ? "впереди"
+      : side === "right"
+        ? "справа"
+        : side === "backward"
+          ? "позади"
+          : side === "left"
+            ? "слева"
+            : "";
+  };
+
   for (const v of graph.vertices) {
     if (!v.inCatalog) continue;
+    let description = "";
+    if (v.kind === "object" && v.parentSquare >= 0) {
+      const parent = graph.vertices[v.parentSquare];
+      const zone =
+        parent.label || (parent.square ? squareContext(parent.square) : "");
+      const where = sidePhrase(v.side, parent.square?.kind === "corridor");
+      description = [zone, where].filter(Boolean).join(", ");
+    }
     places.push({
       id: v.key,
       name: v.label,
@@ -319,6 +365,7 @@ export function listPlaces(): Place[] {
             ? "orient"
             : v.object!.kind,
       floor: v.floor,
+      description: description || undefined,
     });
   }
   places.sort((a, b) => {
@@ -338,6 +385,54 @@ function exitTarget(v: Vertex): string {
   }
   if (v.kind === "joint") return `точки «${v.label}»`;
   return "конца зоны";
+}
+
+function squareMacro(
+  graph: Graph,
+  squareIdx: number,
+  standSide: Dir | ""
+): MacroNeighbor[] {
+  const V = graph.vertices;
+  // Пользователь стоит на стороне входа и смотрит на противоположную,
+  // поэтому направления считаем от стороны напротив входа.
+  const standIndex = standSide ? SIDE_INDEX[standSide] : -1;
+  const facing = standIndex >= 0 ? (standIndex + 2) % 4 : 0;
+  const neighbors: MacroNeighbor[] = [];
+  const seen = new Set<number>();
+  for (const jointIdx of V[squareIdx].neighbors) {
+    const joint = V[jointIdx];
+    if (joint.kind !== "joint") continue;
+    const sideIdx = SIDE_INDEX[joint.side];
+    if (sideIdx === undefined) continue;
+    const slot = (sideIdx - facing + 4) % 4;
+    const direction: MacroNeighbor["direction"] | null =
+      slot === 0 ? "forward" : slot === 1 ? "right" : slot === 3 ? "left" : null;
+    if (!direction) continue;
+    for (const nextIdx of joint.neighbors) {
+      if (nextIdx === squareIdx || seen.has(nextIdx)) continue;
+      const next = V[nextIdx];
+      if (next.kind !== "square" || !next.square) continue;
+      seen.add(nextIdx);
+      // Для коридора перечисляем комнаты от стороны, которой он примыкает.
+      const labels = (graph.objectsBySquare.get(nextIdx) ?? [])
+        .map((i) => V[i].label)
+        .filter(Boolean);
+      if (
+        next.square.kind === "corridor" &&
+        joint.jointId === next.square.finish
+      ) {
+        labels.reverse();
+      }
+      neighbors.push({
+        id: next.key,
+        type: next.square.kind,
+        name: next.label,
+        direction,
+        landmarks: labels.slice(0, 3),
+      });
+    }
+  }
+  return neighbors;
 }
 
 function corridorForward(
@@ -474,6 +569,7 @@ function buildSteps(graph: Graph, path: number[]): RouteStep[] {
                 icon === "left" || icon === "right" || icon === "back"
                   ? icon
                   : "straight",
+              macro: squareMacro(graph, idx, entryV ? entryV.side : ""),
             }
           : undefined,
     });

@@ -30,7 +30,8 @@ export function ContentMap({ places, onSelect }: ContentMapProps) {
     const filtered = places.filter(
       (place) =>
         place.name.toLowerCase().includes(query) ||
-        KIND_LABELS[place.kind].toLowerCase().includes(query)
+        KIND_LABELS[place.kind].toLowerCase().includes(query) ||
+        (place.description?.toLowerCase().includes(query) ?? false)
     );
     return filtered.slice(0, 30);
   }, [places, text]);
@@ -89,7 +90,8 @@ export function ContentMap({ places, onSelect }: ContentMapProps) {
         </div>
         {text.trim() === "" ? (
           <p className="text-xs text-muted-foreground">
-            Введите тип ориентира, название аудитории или её номер.
+            Введите тип ориентира, название аудитории, её номер или место
+            поиска: зону и сторону.
           </p>
         ) : matches.length === 0 ? (
           <p className="text-xs text-muted-foreground">Ничего не найдено</p>
@@ -109,7 +111,14 @@ export function ContentMap({ places, onSelect }: ContentMapProps) {
                     index === active && "bg-accent text-accent-foreground"
                   )}
                 >
-                  <span className="min-w-0 truncate">{place.name}</span>
+                  <span className="min-w-0">
+                    <span className="block truncate">{place.name}</span>
+                    {place.description && (
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {place.description}
+                      </span>
+                    )}
+                  </span>
                   <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
                     <Badge
                       variant="outline"
