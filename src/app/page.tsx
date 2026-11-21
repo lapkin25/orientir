@@ -1,6 +1,5 @@
 import { Navigator } from "@/components/navigator/navigator";
-import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
+import { NavigatorHeader, SiteLogo } from "@/components/site-header";
 import { listPlaces } from "@/lib/navigator/graph";
 
 // Статическая сборка не умеет читать параметры адреса на сервере,
@@ -9,12 +8,12 @@ export default function IndexPage() {
   const places = listPlaces();
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-b from-background to-muted/40">
-      <SiteHeader />
-      <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-6">
+    <div className="mx-auto min-h-screen w-full max-w-md px-4 pb-8">
+      <SiteLogo />
+      <main>
+        <NavigatorHeader />
         <Navigator places={places} />
       </main>
-      <SiteFooter />
     </div>
   );
 }

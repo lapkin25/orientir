@@ -41,7 +41,7 @@ export function MicroMapStairs({ map }: { map: StairsMapData }) {
           aria-label={`${label}: подробнее о лестнице`}
           className="group flex w-28 flex-col items-stretch rounded-lg border bg-muted/30 p-2 text-left transition-colors hover:border-primary/50 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <span className="rounded-md border bg-background px-2 py-1 text-center text-[11px] font-medium">
+          <span className="rounded-md border bg-background px-2 py-1 text-center text-sm font-medium">
             {floorName(top)}
           </span>
           <span className="relative my-1 flex h-24 items-center justify-center">
@@ -59,13 +59,13 @@ export function MicroMapStairs({ map }: { map: StairsMapData }) {
               <Arrow className="h-4 w-4" aria-hidden />
             </span>
           </span>
-          <span className="rounded-md border bg-background px-2 py-1 text-center text-[11px] font-medium">
+          <span className="rounded-md border bg-background px-2 py-1 text-center text-sm font-medium">
             {floorName(bottom)}
           </span>
-          <span className="mt-1.5 text-center text-[11px] font-medium leading-tight">
+          <span className="mt-1.5 text-center text-sm font-medium leading-tight">
             {label}
           </span>
-          <span className="mt-1 flex items-center justify-center gap-1 text-[10px] text-muted-foreground group-hover:text-primary">
+          <span className="mt-1 flex items-center justify-center gap-1 text-xs text-muted-foreground group-hover:text-primary">
             <ZoomIn className="h-3 w-3" aria-hidden />
             Подробнее
           </span>

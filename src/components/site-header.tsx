@@ -1,24 +1,60 @@
+import Image from "next/image";
 import Link from "next/link";
-import { SiteNav } from "@/components/site-nav";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ArrowLeft, BookOpen } from "lucide-react";
 
-export function SiteHeader() {
+const ICON_LINK =
+  "flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+
+export function SiteLogo() {
   return (
-    <header className="border-b">
-      <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-3 px-4 py-3">
-        <Link href="/" className="transition-opacity hover:opacity-80">
-          <span className="block text-lg font-semibold leading-tight">
-            ВВГУ.Ориентир
-          </span>
-          <span className="block text-xs text-muted-foreground">
-            Упрощённый навигатор по университету
-          </span>
+    <div className="mx-auto w-[70%] max-w-xs py-8">
+      <Image
+        src="/vvsu-logo.svg"
+        alt="ВВГУ"
+        width={249}
+        height={81}
+        priority
+        className="h-auto w-full object-contain"
+      />
+    </div>
+  );
+}
+
+export function NavigatorHeader() {
+  return (
+    <header className="px-1 pb-1">
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="select-none text-[2rem] font-normal leading-tight">
+          Ориентир
+        </h1>
+        <Link
+          href="/directory"
+          aria-label="Справочник"
+          title="Справочник"
+          className={ICON_LINK}
+        >
+          <BookOpen className="h-8 w-8" strokeWidth={1.5} aria-hidden />
         </Link>
-        <ThemeToggle />
       </div>
-      <nav aria-label="Разделы сайта" className="mx-auto w-full max-w-2xl px-4 pb-2">
-        <SiteNav />
-      </nav>
+      <p className="mt-0.5 select-none text-base text-white/90">
+        Упрощённый навигатор по университету
+      </p>
+    </header>
+  );
+}
+
+export function DirectoryHeader() {
+  return (
+    <header className="mb-4 flex items-center border-b border-primary/80 pb-1">
+      <Link
+        href="/"
+        aria-label="Назад к навигатору"
+        title="Назад"
+        className={ICON_LINK}
+      >
+        <ArrowLeft className="h-7 w-7" aria-hidden />
+      </Link>
+      <h1 className="mx-auto pr-12 text-2xl font-normal">Справочник</h1>
     </header>
   );
 }

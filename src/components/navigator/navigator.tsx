@@ -2,52 +2,17 @@
 
 import { useMemo, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import {
-  ArrowDownToLine,
-  ArrowRight,
-  ArrowUpToLine,
-  ChevronDown,
-  CornerUpLeft,
-  CornerUpRight,
-  Footprints,
-  MapPin,
-  Navigation2,
-  RotateCcw,
-  type LucideIcon,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { Input } from "@/components/ui/input";
+import { ArrowRight, EllipsisVertical, Search } from "lucide-react";
 import {
   findRoute,
   type Place,
   type RouteResult,
-  type StepIcon,
 } from "@/lib/navigator/graph";
-import { ContentMap } from "@/components/navigator/content-map";
 import { MacroMap } from "@/components/navigator/macro-map";
 import { MicroMapCorridor } from "@/components/navigator/micro-map-corridor";
 import { MicroMapSquare } from "@/components/navigator/micro-map-square";
 import { MicroMapStairs } from "@/components/navigator/micro-map-stairs";
 import { cn } from "@/lib/utils";
-
-const STEP_ICONS: Record<StepIcon, LucideIcon> = {
-  start: Footprints,
-  straight: Navigation2,
-  left: CornerUpLeft,
-  right: CornerUpRight,
-  back: RotateCcw,
-  "stairs-up": ArrowUpToLine,
-  "stairs-down": ArrowDownToLine,
-  finish: MapPin,
-};
 
 function subscribeToLocation(onChange: () => void): () => void {
   window.addEventListener("popstate", onChange);
@@ -59,8 +24,8 @@ interface PlaceFieldProps {
   label: string;
   selected: Place | null;
   onSelect: (place: Place) => void;
+  onSubmit: () => void;
   places: Place[];
-  disabled?: boolean;
 }
 
 function PlaceField({
@@ -68,8 +33,8 @@ function PlaceField({
   label,
   selected,
   onSelect,
+  onSubmit,
   places,
-  disabled,
 }: PlaceFieldProps) {
   const [text, setText] = useState(selected ? selected.name : "");
   const [open, setOpen] = useState(false);
@@ -77,11 +42,13 @@ function PlaceField({
 
   const matches = useMemo(() => {
     const query = text.trim().toLowerCase();
-    const filtered = query
-      ? places.filter((p) => p.name.toLowerCase().includes(query))
-      : places;
-    return filtered.slice(0, 30);
+    if (!query) return [];
+    return places
+      .filter((p) => p.name.toLowerCase().includes(query))
+      .slice(0, 30);
   }, [places, text]);
+
+  const showList = open && matches.length > 0;
 
   const pick = (place: Place) => {
     setText(place.name);
@@ -92,17 +59,16 @@ function PlaceField({
 
   return (
     <div className="relative">
-      <Input
+      <input
         id={id}
         value={text}
         placeholder={label}
         aria-label={label}
         autoComplete="off"
         role="combobox"
-        aria-expanded={open}
+        aria-expanded={showList}
         aria-controls={`${id}-list`}
         aria-autocomplete="list"
-        disabled={disabled}
         onChange={(event) => {
           setText(event.target.value);
           setActive(-1);
@@ -115,42 +81,54 @@ function PlaceField({
             setOpen(false);
             return;
           }
-          if (!open || matches.length === 0) {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            if (showList) {
+              pick(matches[active >= 0 ? active : 0]);
+            } else {
+              onSubmit();
+            }
             return;
           }
+          if (!showList) return;
           if (event.key === "ArrowDown") {
             event.preventDefault();
             setActive((prev) => Math.min(prev + 1, matches.length - 1));
           } else if (event.key === "ArrowUp") {
             event.preventDefault();
             setActive((prev) => Math.max(prev - 1, 0));
-          } else if (event.key === "Enter") {
-            event.preventDefault();
-            pick(matches[active >= 0 ? active : 0]);
           }
         }}
+        className={cn(
+          "w-full rounded-[10px] border-2 border-primary/80 bg-card px-3 py-3 text-lg text-white outline-none transition-[border-color,border-radius] placeholder:text-[#d9d4d4] hover:border-accent focus:border-accent",
+          showList && "rounded-b-none"
+        )}
       />
-      {open && !disabled && matches.length > 0 && (
+      {showList && (
         <ul
           id={`${id}-list`}
           role="listbox"
           aria-label={label}
           onMouseDown={(event) => event.preventDefault()}
-          className="absolute z-20 mt-1.5 max-h-64 w-full overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+          className="absolute z-20 -mt-0.5 max-h-60 w-full overflow-y-auto rounded-b-[10px] border-2 border-t-0 border-accent bg-card shadow-lg"
         >
           {matches.map((place, index) => (
-            <li key={place.id} role="option" aria-selected={selected?.id === place.id}>
+            <li
+              key={place.id}
+              role="option"
+              aria-selected={selected?.id === place.id}
+            >
               <button
                 type="button"
                 onClick={() => pick(place)}
                 onMouseEnter={() => setActive(index)}
                 className={cn(
-                  "flex w-full items-center justify-between gap-2 rounded-sm px-2.5 py-1.5 text-left text-sm outline-none",
-                  index === active && "bg-accent text-accent-foreground"
+                  "flex w-full items-center justify-between gap-2 border-b border-primary/30 px-3 py-2.5 text-left text-lg font-medium text-white outline-none",
+                  index === active && "bg-[#1481d7]/30"
                 )}
               >
                 <span className="truncate">{place.name}</span>
-                <span className="shrink-0 text-xs text-muted-foreground">
+                <span className="shrink-0 text-sm font-normal text-white/70">
                   {place.floor} эт.
                 </span>
               </button>
@@ -158,14 +136,12 @@ function PlaceField({
           ))}
         </ul>
       )}
-      {open && !disabled && matches.length === 0 && (
-        <div className="absolute z-20 mt-1.5 w-full rounded-md border bg-popover p-3 text-sm text-muted-foreground shadow-md">
-          Ничего не найдено
-        </div>
-      )}
     </div>
   );
 }
+
+const STEP_BUTTON =
+  "flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-expanded:text-accent";
 
 function RouteStepItem({
   step,
@@ -174,142 +150,99 @@ function RouteStepItem({
   step: RouteResult["steps"][number];
   arrived?: boolean;
 }) {
-  const Icon = STEP_ICONS[step.icon];
+  const [photoOpen, setPhotoOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const showMacro = step.map?.kind === "square" && !!step.map.macro && !arrived;
+  const hasDetail = !!step.detail || !!step.map;
+
   return (
-    <li className="flex gap-3">
-      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-        <Icon className="h-4 w-4" aria-hidden />
-      </span>
-      <div className="min-w-0 flex-1 space-y-1.5">
-        <p className="text-sm leading-snug">{step.text}</p>
-        {step.detail && (
-          <p className="text-xs text-muted-foreground">{step.detail}</p>
-        )}
-        {step.map?.kind === "square" && <MicroMapSquare map={step.map} />}
-        {step.map?.kind === "square" && step.map.macro && !arrived && (
-          <MacroMap neighbors={step.map.macro} />
-        )}
-        {step.map?.kind === "corridor" && <MicroMapCorridor map={step.map} />}
-        {step.map?.kind === "stairs" && <MicroMapStairs map={step.map} />}
+    <li className="my-4">
+      <div className="flex items-center justify-between gap-2">
+        <p className="flex-1 border-l-2 border-primary/80 px-2 py-1 text-xl leading-snug">
+          {step.text}
+        </p>
         {step.photo && (
-          <figure className="space-y-1">
-            <Image
-              src={`/${step.photo}`}
-              alt={step.photoNote ?? ""}
-              width={640}
-              height={360}
-              className="w-full max-w-sm rounded-lg border object-cover"
-            />
-            {step.photoNote && (
-              <figcaption className="text-xs text-muted-foreground">
-                {step.photoNote}
-              </figcaption>
-            )}
-          </figure>
+          <button
+            type="button"
+            aria-label="Лупа: показать фото"
+            title="Показать фото"
+            aria-expanded={photoOpen}
+            onClick={() => setPhotoOpen((v) => !v)}
+            className={STEP_BUTTON}
+          >
+            <Search className="h-7 w-7" strokeWidth={2.25} aria-hidden />
+          </button>
+        )}
+        {hasDetail && (
+          <button
+            type="button"
+            aria-label="Подробнее"
+            title="Подробнее"
+            aria-expanded={detailOpen}
+            onClick={() => setDetailOpen((v) => !v)}
+            className={STEP_BUTTON}
+          >
+            <EllipsisVertical className="h-7 w-7" strokeWidth={2.5} aria-hidden />
+          </button>
         )}
       </div>
+      {photoOpen && step.photo && (
+        <figure className="mt-1 space-y-1 border-l-2 border-accent px-2 py-1">
+          <Image
+            src={`/${step.photo}`}
+            alt={step.photoNote ?? "Фото ориентира"}
+            width={640}
+            height={360}
+            className="w-full rounded-[10px] object-cover"
+          />
+          {step.photoNote && (
+            <figcaption className="text-base text-white/85">
+              {step.photoNote}
+            </figcaption>
+          )}
+        </figure>
+      )}
+      {detailOpen && hasDetail && (
+        <div className="mt-1 space-y-2 border-l-2 border-accent px-2 py-1 text-lg">
+          {step.detail && <p>{step.detail}</p>}
+          {step.map?.kind === "square" && <MicroMapSquare map={step.map} />}
+          {step.map?.kind === "square" && showMacro && step.map.macro && (
+            <MacroMap neighbors={step.map.macro} />
+          )}
+          {step.map?.kind === "corridor" && (
+            <MicroMapCorridor map={step.map} />
+          )}
+          {step.map?.kind === "stairs" && <MicroMapStairs map={step.map} />}
+        </div>
+      )}
     </li>
   );
 }
 
-function RouteCard({ result }: { result: RouteResult }) {
+function RouteOutput({ result }: { result: RouteResult }) {
   return (
-    <Card>
-      <CardContent className="space-y-4 p-4 sm:p-5">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Маршрут
-          </p>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <Badge variant="secondary" className="max-w-full">
-              <span className="truncate">{result.fromName}</span>
-            </Badge>
-            <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-            <Badge variant="secondary" className="max-w-full">
-              <span className="truncate">{result.toName}</span>
-            </Badge>
-          </div>
-        </div>
-        <ol className="space-y-3">
-          {result.steps.map((step, index) => (
-            <RouteStepItem
-              key={index}
-              step={step}
-              arrived={index === result.steps.length - 2}
-            />
-          ))}
-        </ol>
-      </CardContent>
-    </Card>
-  );
-}
-
-function Catalog({
-  places,
-  onPick,
-}: {
-  places: Place[];
-  onPick: (place: Place) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const floors = useMemo(() => {
-    const map = new Map<number, Place[]>();
-    for (const place of places) {
-      const list = map.get(place.floor) ?? [];
-      list.push(place);
-      map.set(place.floor, list);
-    }
-    return [...map.entries()].sort((a, b) => a[0] - b[0]);
-  }, [places]);
-
-  return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger asChild>
-        <Button variant="outline" className="w-full justify-between">
-          Справочник точек
-          <ChevronDown
-            className={cn("h-4 w-4 transition-transform", open && "rotate-180")}
-            aria-hidden
+    <section aria-label="Маршрут" className="mt-2">
+      <div className="mx-6 border-t-2 border-primary/80" />
+      <h2 className="mb-2 mt-3 text-center text-xl">Маршрут</h2>
+      <div className="flex items-center justify-center gap-2">
+        <span className="min-w-10 rounded-md border-2 border-primary/80 bg-card px-2 py-1 text-center text-lg leading-tight">
+          {result.fromName}
+        </span>
+        <ArrowRight className="h-8 w-8 shrink-0" aria-hidden />
+        <span className="min-w-10 rounded-md border-2 border-primary/80 bg-card px-2 py-1 text-center text-lg leading-tight">
+          {result.toName}
+        </span>
+      </div>
+      <ol>
+        {result.steps.map((step, index) => (
+          <RouteStepItem
+            key={index}
+            step={step}
+            arrived={index === result.steps.length - 2}
           />
-        </Button>
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <Card className="mt-2">
-          <CardContent className="max-h-80 space-y-4 overflow-y-auto p-4">
-            <p className="text-xs text-muted-foreground">
-              Нажмите на точку, чтобы выбрать её пунктом назначения. Полный
-              список —{" "}
-              <Link
-                href="/directory"
-                className="underline underline-offset-2 hover:text-foreground"
-              >
-                в справочнике
-              </Link>
-              .
-            </p>
-            {floors.map(([floor, list]) => (
-              <div key={floor}>
-                <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {floor} этаж
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {list.map((place) => (
-                    <button
-                      key={place.id}
-                      type="button"
-                      onClick={() => onPick(place)}
-                      className="rounded-md border px-2.5 py-1 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
-                    >
-                      {place.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </CollapsibleContent>
-    </Collapsible>
+        ))}
+      </ol>
+    </section>
   );
 }
 
@@ -321,7 +254,7 @@ export function Navigator({ places }: { places: Place[] }) {
   const [resetKey, setResetKey] = useState(0);
   const hasResult = result !== null;
 
-  // Точку из каталога подставляем по адресу вида /?to=… уже в браузере:
+  // Точку из справочника подставляем по адресу вида /?to=… уже в браузере:
   // так главная страница остаётся статической, а начальный рендер
   // на сервере и в браузере совпадает.
   const search = useSyncExternalStore(
@@ -344,21 +277,17 @@ export function Navigator({ places }: { places: Place[] }) {
     }
   }
 
-  const clearResult = () => {
-    setResult(null);
-    setError(null);
-  };
-
   const submit = () => {
     if (hasResult) {
       setFrom(null);
       setTo(null);
-      clearResult();
+      setResult(null);
+      setError(null);
       setResetKey((key) => key + 1);
       return;
     }
     if (!from || !to) {
-      setError("Выберите точки отправления и назначения из подсказок");
+      setError("Выберите точки «Откуда» и «Куда» из подсказок");
       return;
     }
     try {
@@ -367,18 +296,22 @@ export function Navigator({ places }: { places: Place[] }) {
     } catch (caught) {
       setResult(null);
       setError(
-        caught instanceof Error
-          ? caught.message
-          : "Не удалось проложить маршрут"
+        caught instanceof Error ? caught.message : "Не удалось проложить маршрут"
       );
     }
   };
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardContent className="space-y-3 p-4 sm:p-5">
-          <div className="grid gap-3">
+    <div className="px-1 pb-4">
+      <form
+        className="space-y-2.5 pt-2.5 text-center"
+        onSubmit={(event) => {
+          event.preventDefault();
+          submit();
+        }}
+      >
+        {!hasResult && (
+          <>
             <PlaceField
               key={`from-${resetKey}`}
               id="route-from"
@@ -388,8 +321,8 @@ export function Navigator({ places }: { places: Place[] }) {
                 setFrom(place);
                 setError(null);
               }}
+              onSubmit={submit}
               places={places}
-              disabled={hasResult}
             />
             <PlaceField
               key={`to-${resetKey}`}
@@ -400,36 +333,24 @@ export function Navigator({ places }: { places: Place[] }) {
                 setTo(place);
                 setError(null);
               }}
+              onSubmit={submit}
               places={places}
-              disabled={hasResult}
             />
-          </div>
-          <Button onClick={submit} className="w-full">
-            {hasResult ? "Проложить новый маршрут" : "Проложить маршрут"}
-          </Button>
-          {error && <p className="text-sm text-destructive">{error}</p>}
-        </CardContent>
-      </Card>
-
-      <ContentMap
-        places={places}
-        onSelect={(place) => {
-          clearResult();
-          setTo(place);
-          setResetKey((key) => key + 1);
-        }}
-      />
-
-      {hasResult && <RouteCard result={result} />}
-
-      <Catalog
-        places={places}
-        onPick={(place) => {
-          clearResult();
-          setTo(place);
-          setResetKey((key) => key + 1);
-        }}
-      />
+          </>
+        )}
+        <button
+          type="submit"
+          className="mb-1 mt-4 min-h-[56px] w-full rounded-full border-[3px] border-primary/80 bg-card px-3 text-lg text-white/95 transition-colors hover:border-accent hover:text-accent focus-visible:border-accent focus-visible:outline-none"
+        >
+          {hasResult ? "Проложить новый маршрут" : "Проложить маршрут"}
+        </button>
+      </form>
+      {error && (
+        <p role="alert" className="mt-3 text-center text-lg text-destructive">
+          {error}
+        </p>
+      )}
+      {hasResult && <RouteOutput result={result} />}
     </div>
   );
 }

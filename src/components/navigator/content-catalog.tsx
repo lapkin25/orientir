@@ -23,17 +23,17 @@ function EntryCard({ entry }: { entry: ContentEntry }) {
       ? KIND_LABELS[entry.kind]
       : (CONTENT_CATEGORY_TITLES.get(entry.category) ?? "Прочее");
   return (
-    <Card>
+    <Card className="rounded-[10px] border-2 border-primary/80 bg-card shadow-none">
       <CardContent className="space-y-3 p-4">
         <div className="space-y-1">
-          <p className="text-sm font-semibold leading-snug">{entry.name}</p>
-          <p className="text-xs text-muted-foreground">Тип: {typeLabel}</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xl leading-snug">{entry.name}</p>
+          <p className="text-base text-muted-foreground">Тип: {typeLabel}</p>
+          <p className="text-base text-muted-foreground">
             Расположение: {entry.floor} этаж
             {entry.location ? `, ${entry.location}` : ""}
           </p>
         </div>
-        <Button asChild size="sm" className="w-full">
+        <Button asChild className="h-12 w-full rounded-full border-2 border-primary/80 bg-card text-lg text-white hover:border-accent hover:bg-card hover:text-accent">
           <Link href={`/?to=${encodeURIComponent(entry.id)}`}>
             Как добраться
           </Link>
@@ -66,7 +66,7 @@ export function ContentCatalog({ entries }: { entries: ContentEntry[] }) {
     <div className="space-y-3">
       <div className="relative">
         <Search
-          className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+          className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground"
           aria-hidden
         />
         <Input
@@ -75,7 +75,7 @@ export function ContentCatalog({ entries }: { entries: ContentEntry[] }) {
           placeholder="Поиск по каталогу: диван, туалет, кафедра…"
           aria-label="Поиск по каталогу ориентиров"
           autoComplete="off"
-          className="pl-9"
+          className="h-12 rounded-[10px] border-2 border-primary/80 bg-card pl-10 text-lg placeholder:text-[#d9d4d4] focus-visible:border-accent focus-visible:ring-0 md:text-lg"
         />
       </div>
       <div className="flex flex-wrap gap-2">
@@ -84,10 +84,10 @@ export function ContentCatalog({ entries }: { entries: ContentEntry[] }) {
           onClick={() => setCategory("all")}
           aria-pressed={category === "all"}
           className={cn(
-            "rounded-full border px-3 py-1 text-sm transition-colors",
+            "rounded-full border-2 px-3 py-1 text-base transition-colors",
             category === "all"
-              ? "bg-primary text-primary-foreground"
-              : "hover:bg-accent"
+              ? "border-accent bg-card text-white"
+              : "border-primary/80 text-white/80 hover:border-accent"
           )}
         >
           Всё
@@ -99,10 +99,10 @@ export function ContentCatalog({ entries }: { entries: ContentEntry[] }) {
             onClick={() => setCategory(item.id)}
             aria-pressed={category === item.id}
             className={cn(
-              "rounded-full border px-3 py-1 text-sm transition-colors",
+              "rounded-full border-2 px-3 py-1 text-base transition-colors",
               category === item.id
-                ? "bg-primary text-primary-foreground"
-                : "hover:bg-accent"
+                ? "border-accent bg-card text-white"
+                : "border-primary/80 text-white/80 hover:border-accent"
             )}
           >
             {item.title}
@@ -110,7 +110,7 @@ export function ContentCatalog({ entries }: { entries: ContentEntry[] }) {
         ))}
       </div>
       {results.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-lg text-muted-foreground">
           Ничего не найдено. Попробуйте другую категорию или слово.
         </p>
       ) : (
@@ -121,7 +121,7 @@ export function ContentCatalog({ entries }: { entries: ContentEntry[] }) {
             ))}
           </div>
           {results.length > shown.length && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               Показаны первые {shown.length} из {results.length}. Уточните
               запрос или выберите категорию.
             </p>

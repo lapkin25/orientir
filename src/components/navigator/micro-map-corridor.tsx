@@ -35,17 +35,17 @@ export function MicroMapCorridor({ map }: { map: CorridorMapData }) {
       </p>
       <div className="mt-2 grid grid-cols-2 gap-2">
         <div className="rounded-md border bg-background p-2">
-          <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             По левую руку
           </p>
           <ul className="mt-1 space-y-1">
             {walls.left.length === 0 ? (
-              <li className="text-[11px] text-muted-foreground">—</li>
+              <li className="text-sm text-muted-foreground">—</li>
             ) : (
               walls.left.map((label, index) => (
                 <li
                   key={`${label}-${index}`}
-                  className="flex items-start gap-1 text-[11px] leading-tight"
+                  className="flex items-start gap-1 text-sm leading-tight"
                 >
                   <DoorOpen
                     className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground"
@@ -58,17 +58,17 @@ export function MicroMapCorridor({ map }: { map: CorridorMapData }) {
           </ul>
         </div>
         <div className="rounded-md border bg-background p-2">
-          <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             По правую руку
           </p>
           <ul className="mt-1 space-y-1">
             {walls.right.length === 0 ? (
-              <li className="text-[11px] text-muted-foreground">—</li>
+              <li className="text-sm text-muted-foreground">—</li>
             ) : (
               walls.right.map((label, index) => (
                 <li
                   key={`${label}-${index}`}
-                  className="flex items-start gap-1 text-[11px] leading-tight"
+                  className="flex items-start gap-1 text-sm leading-tight"
                 >
                   <DoorOpen
                     className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground"

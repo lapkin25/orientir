@@ -37,8 +37,8 @@ function SlotChips({ labels, isExit }: { labels: string[]; isExit: boolean }) {
           key={`${label}-${index}`}
           className={
             isExit
-              ? "rounded border border-primary/50 bg-primary/5 px-1.5 py-0.5 text-[10px] leading-tight"
-              : "rounded border bg-background px-1.5 py-0.5 text-[10px] leading-tight text-muted-foreground"
+              ? "rounded border border-primary/50 bg-primary/5 px-1.5 py-0.5 text-xs leading-tight"
+              : "rounded border bg-background px-1.5 py-0.5 text-xs leading-tight text-muted-foreground"
           }
         >
           {label}
@@ -96,12 +96,12 @@ export function MicroMapSquare({ map }: { map: SquareMapData }) {
               style={{ transform: `rotate(${TURN_ANGLE[turn]}deg)` }}
               aria-hidden
             />
-            <span className="text-[10px] font-medium text-primary">
+            <span className="text-xs font-medium text-primary">
               {TURN_WORD[turn]}
             </span>
           </div>
           {!standSide && (
-            <span className="absolute bottom-1 flex items-center gap-1 text-[10px] text-muted-foreground">
+            <span className="absolute bottom-1 flex items-center gap-1 text-xs text-muted-foreground">
               <Footprints className="h-3 w-3" aria-hidden /> вы здесь
             </span>
           )}
@@ -110,7 +110,7 @@ export function MicroMapSquare({ map }: { map: SquareMapData }) {
         <div />
         <div className="space-y-1">
           {standSide && (
-            <p className="flex items-center justify-center gap-1 text-[10px] font-medium text-primary">
+            <p className="flex items-center justify-center gap-1 text-xs font-medium text-primary">
               <Footprints className="h-3 w-3" aria-hidden /> вы здесь
             </p>
           )}
