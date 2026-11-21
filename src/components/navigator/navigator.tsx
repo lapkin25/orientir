@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -306,21 +306,30 @@ function Catalog({
   );
 }
 
-export function Navigator({
-  places,
-  initialFrom = null,
-  initialTo = null,
-}: {
-  places: Place[];
-  initialFrom?: Place | null;
-  initialTo?: Place | null;
-}) {
-  const [from, setFrom] = useState<Place | null>(initialFrom);
-  const [to, setTo] = useState<Place | null>(initialTo);
+export function Navigator({ places }: { places: Place[] }) {
+  const [from, setFrom] = useState<Place | null>(null);
+  const [to, setTo] = useState<Place | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<RouteResult | null>(null);
   const [resetKey, setResetKey] = useState(0);
   const hasResult = result !== null;
+
+  // Точку из каталога подставляем по адресу вида /?to=… уже в браузере:
+  // так главная страница остаётся статической, а начальный рендер
+  // на сервере и в браузере совпадает.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const pick = (id: string | null) =>
+      id ? (places.find((place) => place.id === id) ?? null) : null;
+    const nextFrom = pick(params.get("from"));
+    const nextTo = pick(params.get("to"));
+    if (!nextFrom && !nextTo) {
+      return;
+    }
+    if (nextFrom) setFrom(nextFrom);
+    if (nextTo) setTo(nextTo);
+    setResetKey((key) => key + 1);
+  }, [places]);
 
   const clearResult = () => {
     setResult(null);

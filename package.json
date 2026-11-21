@@ -11,6 +11,7 @@
     "start": "next start",
     "format": "bunx prettier --write . --ignore-unknown",
     "build": "next build",
+    "build:static": "NEXT_OUTPUT=export next build",
     "dev": "next dev",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
