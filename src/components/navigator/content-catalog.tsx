@@ -29,8 +29,13 @@ function EntryCard({ entry }: { entry: ContentEntry }) {
           <p className="text-xl leading-snug">{entry.name}</p>
           <p className="text-base text-muted-foreground">Тип: {typeLabel}</p>
           <p className="text-base text-muted-foreground">
-            Расположение: {entry.floor} этаж
-            {entry.location ? `, ${entry.location}` : ""}
+            {entry.kind === "section" ? "Отсек: " : "Расположение: "}
+            {entry.floor} этаж
+            {entry.location
+              ? entry.kind === "section"
+                ? `; включает: ${entry.location}`
+                : `, ${entry.location}`
+              : ""}
           </p>
         </div>
         <Button asChild className="h-12 w-full rounded-full border-2 border-primary/80 bg-card text-lg text-white hover:border-accent hover:bg-card hover:text-accent">

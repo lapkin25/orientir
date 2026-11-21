@@ -11,6 +11,7 @@ import {
   type SideObject,
 } from "./parse-plan";
 import { planXML } from "./plan-xml";
+import { SECTIONS, SECTION_PREFIX, sectionByZone } from "./sections";
 
 export type StepIcon =
   | "start"
@@ -77,6 +78,7 @@ export interface RouteNode {
   floor: number;
   landmarks: NodeLandmark[];
   scheme?: string;
+  section?: string;
 }
 
 export interface RouteStep {
@@ -95,7 +97,7 @@ export interface RouteResult {
   steps: RouteStep[];
 }
 
-export type PlaceKind = "room" | "orient" | "square" | "corridor";
+export type PlaceKind = "room" | "orient" | "square" | "corridor" | "section";
 
 export interface Place {
   id: string;
@@ -411,6 +413,23 @@ export function listPlaces(): Place[] {
       description: description || undefined,
     });
   }
+  for (const section of SECTIONS) {
+    const zoneNames = section.zones
+      .map((zone) => graph.byKey.get(`sq:${zone}`))
+      .filter((idx): idx is number => idx !== undefined)
+      .map((idx) => {
+        const v = graph.vertices[idx];
+        return v.label || (v.square ? squareContext(v.square) : "");
+      })
+      .filter(Boolean);
+    places.push({
+      id: `${SECTION_PREFIX}${section.id}`,
+      name: section.name,
+      kind: "section",
+      floor: section.floor,
+      description: zoneNames.length > 0 ? zoneNames.join(", ") : undefined,
+    });
+  }
   places.sort((a, b) => {
     if (a.floor !== b.floor) return a.floor - b.floor;
     if (a.name < b.name) return -1;
@@ -558,6 +577,7 @@ function routeNode(
     floor: v.floor,
     landmarks: landmarks.slice(0, 5),
     scheme: NODE_SCHEMES[v.square.id],
+    section: sectionByZone(v.square.id)?.name,
   };
 }
 
@@ -688,10 +708,26 @@ function buildSteps(graph: Graph, path: number[]): RouteStep[] {
   return steps;
 }
 
+function resolvePlaceKey(graph: Graph, id: string): number | undefined {
+  if (id.startsWith(SECTION_PREFIX)) {
+    const section = SECTIONS.find(
+      (item) => item.id === id.slice(SECTION_PREFIX.length)
+    );
+    return section ? graph.byKey.get(`sq:${section.entry}`) : undefined;
+  }
+  return graph.byKey.get(id);
+}
+
+function sectionName(id: string): string | undefined {
+  if (!id.startsWith(SECTION_PREFIX)) return undefined;
+  return SECTIONS.find((item) => item.id === id.slice(SECTION_PREFIX.length))
+    ?.name;
+}
+
 export function findRoute(fromId: string, toId: string): RouteResult {
   const graph = getGraph();
-  const from = graph.byKey.get(fromId);
-  const to = graph.byKey.get(toId);
+  const from = resolvePlaceKey(graph, fromId);
+  const to = resolvePlaceKey(graph, toId);
   if (from === undefined || to === undefined) {
     throw new Error("Выберите точки отправления и назначения из списка");
   }
@@ -726,8 +762,8 @@ export function findRoute(fromId: string, toId: string): RouteResult {
   path.reverse();
 
   return {
-    fromName: graph.vertices[from].label,
-    toName: graph.vertices[to].label,
+    fromName: sectionName(fromId) ?? graph.vertices[from].label,
+    toName: sectionName(toId) ?? graph.vertices[to].label,
     steps: buildSteps(graph, path),
   };
 }

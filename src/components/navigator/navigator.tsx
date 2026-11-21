@@ -200,6 +200,11 @@ function RouteNodeCard({ node }: { node: RouteNode }) {
           <span>
             Узловая точка: {node.name}
             <span className="text-white/70">, {node.floor} этаж</span>
+            {node.section && (
+              <span className="block text-base text-white/70">
+                Отсек: {node.section}
+              </span>
+            )}
           </span>
         </p>
       </div>

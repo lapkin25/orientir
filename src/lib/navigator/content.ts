@@ -15,6 +15,12 @@ export interface ContentCategory {
 
 export const CONTENT_CATEGORIES: ContentCategory[] = [
   {
+    id: "sections",
+    title: "Отсеки",
+    types: [],
+    keywords: [],
+  },
+  {
     id: "rest",
     title: "Отдых и ожидание",
     types: ["rest", "rest+charge"],
@@ -74,6 +80,7 @@ export const KIND_LABELS: Record<PlaceKind, string> = {
   orient: "Ориентир",
   square: "Площадка",
   corridor: "Коридор",
+  section: "Отсек",
 };
 
 export interface ContentEntry {
@@ -89,6 +96,7 @@ export interface ContentEntry {
 export function categorize(
   place: Pick<Place, "kind" | "name" | "description" | "orientType">
 ): string {
+  if (place.kind === "section") return "sections";
   const text = `${place.name} ${place.description ?? ""}`.toLowerCase();
   for (const category of CONTENT_CATEGORIES) {
     if (
