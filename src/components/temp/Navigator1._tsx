@@ -1,0 +1,13 @@
+{from && (
+  <section>
+    <p className="mb-2 text-sm font-medium">Куда пойти от «{from.name}»</p>
+    <ContentMap
+      fromId={from.id}
+      onPick={(entry) => {
+        clearResult();
+        setTo(entry); // ContentEntry совместим с Place: id, name, kind, floor, building
+        setResetKey((key) => key + 1);
+      }}
+    />
+  </section>
+)}

@@ -1,0 +1,100 @@
+export interface RouteOrient {
+  label: string;
+  dir: Dir; // сторона площадки, на которой стоит ориентир
+}
+
+export interface RouteStep {
+  icon: StepIcon;
+  text: string;
+  detail?: string;
+  photo?: string;
+  photoNote?: string;
+  // данные микро-карты; у start/finish не заполняется
+  kind?: "square" | "corridor" | "stairs";
+  name?: string;      // название площадки/коридора
+  floor?: number;
+  building?: string;
+  turn?: "forward" | "left" | "right" | "back"; // направление движения по площадке
+  target?: string;    // текст цели движения («до ...»)
+  keyOrients?: RouteOrient[];              // ключевые ориентиры — на микро-карту площадки
+  allOrients?: RouteOrient[];              // все ориентиры — подробная карточка (лупа)
+  walls?: { left: string[]; right: string[] }; // микро-карта коридора
+}
+
+const SIDE_ORDER = ["forward", "right", "backward", "left"] as const;
+type SideName = (typeof SIDE_ORDER)[number];
+type MacroDir = "forward" | "right" | "back" | "left";
+
+function relDir(side0: string, side1: string): MacroDir {
+  const r =
+    (SIDE_INDEX[side1] - SIDE_INDEX[side0] + 2 + 4) % 4;
+  return r === 0 ? "forward" : r === 1 ? "right" : r === 2 ? "back" : "left";
+}
+
+export interface MacroEntry {
+  id: string;
+  name: string;
+  floor: number;
+  building: string;
+  dir: MacroDir;
+  hops: number;
+  floorCrossed: boolean; // путь проходит через лестницу
+}
+
+export function macroMapFrom(fromId: string): MacroEntry[] {
+  const graph = getGraph();
+  const start = graph.byKey.get(fromId);
+  if (start === undefined) return [];
+  const startV = graph.vertices[start];
+
+  // точка обзора: сторона площадки, на которой стоит ориентир
+  const baseSide = startV.side || "forward";
+
+  const prev = new Map<number, number>([[start, -1]]);
+  const dist = new Map<number, number>([[start, 0]]);
+  const queue: number[] = [start];
+  const result: MacroEntry[] = [];
+
+  while (queue.length > 0) {
+    const cur = queue.shift()!;
+    const v = graph.vertices[cur];
+
+    if (cur !== start && v.key) {
+      // восстанавливаем путь до старта
+      const path: number[] = [];
+      for (let n = cur; n !== -1; n = prev.get(n)!) path.push(n);
+      path.reverse();
+
+      // направление: по тому, что стоит сразу после старта на пути
+      let dir: MacroDir;
+      const nxt = graph.vertices[path[1]];
+      if (nxt.side) {
+        dir = relDir(baseSide, nxt.side);
+      } else {
+        // сосед — стык или лестница: берём сторону стыка на площадке старта
+        const joint = path[1];
+        dir = relDir(baseSide, graph.vertices[joint].side || "forward");
+      }
+      const floorCrossed = path.some(
+        (i) => graph.vertices[i].kind === "stairs"
+      );
+      result.push({
+        id: v.key,
+        name: v.label,
+        floor: v.floor,
+        building: v.building,
+        dir,
+        hops: dist.get(cur)!,
+        floorCrossed,
+      });
+    }
+
+    for (const nb of v.neighbors) {
+      if (dist.has(nb)) continue;
+      dist.set(nb, dist.get(cur)! + 1);
+      prev.set(nb, cur);
+      queue.push(nb);
+    }
+  }
+  return result.sort((a, b) => a.hops - b.hops);
+}

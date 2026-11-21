@@ -1,0 +1,27 @@
+export interface ContentCategory {
+  id: string;
+  title: string;
+  types: string[];   // типы ориентиров из XML
+  keywords: string[]; // подстроки в названии/описании
+}
+
+export const CONTENT_CATEGORIES: ContentCategory[] = [
+  { id: "rest",  title: "Отдых и ожидание",      types: ["rest", "rest+charge"],  keywords: ["диван", "зона отдыха", "зона ожидания"] },
+  { id: "wc",    title: "Туалеты",               types: ["wc", "wc_m", "wc_f"],   keywords: ["туалет"] },
+  { id: "info",  title: "Справка и информация",  types: ["info_desk"],            keywords: ["стенд", "схема этажа", "план эвакуации", "указатель", "приёмная"] },
+  { id: "copy",  title: "Копии и документы",     types: ["copy"],                 keywords: ["копировальн", "копи-центр", "копи центр"] },
+  { id: "food",  title: "Еда и кафе",            types: ["cafe", "canteen"],      keywords: ["кафе", "столовая", "буфет", "кофе"] },
+  { id: "admin", title: "Офисы и отделы",        types: [],                       keywords: ["отдел", "ректорат", "директор", "управление", "студенческий офис"] },
+  { id: "study", title: "Учёба и работа",        types: [],                       keywords: ["библиотек", "лаборатория", "кафедра", "мастерская"] },
+  { id: "safety",title: "Безопасность",          types: ["fire_extinguisher"],    keywords: ["огнетушитель"] },
+  { id: "other", title: "Прочее",                types: [],                       keywords: [] },
+];
+
+export function categorize(type: string, hay: string): string {
+  const text = hay.toLowerCase();
+  for (const cat of CONTENT_CATEGORIES) {
+    if (cat.types.includes(type)) return cat.id;
+    if (cat.keywords.some((k) => text.includes(k))) return cat.id;
+  }
+  return "other";
+}

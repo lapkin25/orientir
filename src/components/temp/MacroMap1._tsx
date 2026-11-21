@@ -1,0 +1,89 @@
+"use client";
+
+import { useMemo } from "react";
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  type LucideIcon,
+} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { macroMapFrom, type MacroEntry } from "@/lib/navigator/graph";
+
+const DIR_ICONS: Record<MacroEntry["dir"], { Icon: LucideIcon; label: string }> = {
+  forward: { Icon: ArrowUp, label: "Прямо" },
+  left: { Icon: ArrowLeft, label: "Налево" },
+  right: { Icon: ArrowRight, label: "Направо" },
+  back: { Icon: ArrowDown, label: "Назад" },
+};
+
+function subline(entry: MacroEntry): string {
+  const floor = entry.floorCrossed
+    ? `через ${Math.abs(entry.floor)} эт. по лестнице`
+    : entry.building
+      ? `${entry.building}, ${entry.floor} этаж`
+      : `${entry.floor} этаж`;
+  return entry.hops <= 2 ? `${floor} · рядом` : `через ${entry.hops} перехода`;
+}
+
+export function MacroMap({
+  fromId,
+  fromName,
+  fromPlace,
+  onPick,
+}: {
+  fromId: string;
+  fromName: string;
+  fromPlace: string;
+  onPick?: (entry: MacroEntry) => void;
+}) {
+  const entries = useMemo(() => macroMapFrom(fromId), [fromId]);
+  if (entries.length === 0) return null;
+
+  return (
+    <Card>
+      <CardContent className="space-y-3 p-4 sm:p-5">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Указатель направлений
+        </p>
+        <div className="rounded-md border bg-muted/40 px-3 py-2">
+          <p className="text-[11px] text-muted-foreground">Вы у ориентира</p>
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="truncate text-sm font-semibold">{fromName}</p>
+            <p className="shrink-0 text-xs text-muted-foreground">{fromPlace}</p>
+          </div>
+        </div>
+        <ul className="space-y-2">
+          {entries.map((entry) => {
+            const { Icon, label } = DIR_ICONS[entry.dir];
+            return (
+              <li key={entry.id}>
+                <button
+                  type="button"
+                  onClick={() => onPick?.(entry)}
+                  className="flex w-full items-center gap-3 rounded-md border px-3 py-2.5 text-left transition-colors hover:bg-accent hover:text-accent-foreground"
+                >
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Icon className="h-4 w-4" aria-hidden />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[11px] text-muted-foreground">
+                      {label}
+                    </span>
+                    <span className="block truncate text-sm font-medium">
+                      {entry.name}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {subline(entry)}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}

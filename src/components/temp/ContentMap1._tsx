@@ -1,0 +1,142 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import Image from "next/image";
+import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  CONTENT_CATEGORIES,
+  searchContent,
+  type ContentEntry,
+} from "@/lib/navigator/content";
+import { nearestContent } from "@/lib/navigator/graph";
+import { cn } from "@/lib/utils";
+
+const CATEGORY_TITLES = new Map(CONTENT_CATEGORIES.map((c) => [c.id, c.title]));
+
+function EntryCard({
+  entry,
+  hops,
+  onPick,
+}: {
+  entry: ContentEntry;
+  hops?: number;
+  onPick: (entry: ContentEntry) => void;
+}) {
+  return (
+    <Card>
+      <CardContent className="space-y-2 p-4">
+        {entry.photo && (
+          <Image
+            src={`/${entry.photo}`}
+            alt={entry.name}
+            width={320}
+            height={200}
+            className="h-36 w-full rounded-md object-cover"
+          />
+        )}
+        <p className="text-sm font-semibold">{entry.name}</p>
+        <p className="text-xs text-muted-foreground">
+          Тип: {CATEGORY_TITLES.get(entry.category) ?? "Прочее"}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Расположение: {entry.building}, {entry.floor} этаж
+          {hops !== undefined ? ` · через ${hops} перехода` : ""}
+        </p>
+        {entry.desc && <p className="text-xs leading-snug">{entry.desc}</p>}
+        <Button size="sm" className="w-full" onClick={() => onPick(entry)}>
+          Как добраться
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function ContentMap({
+  fromId,
+  onPick,
+}: {
+  fromId: string | null;
+  onPick: (entry: ContentEntry) => void;
+}) {
+  const [category, setCategory] = useState("all");
+  const [query, setQuery] = useState("");
+
+  const results = useMemo(() => {
+    if (fromId) return nearestContent(fromId, category).filter(matches);
+    return searchContent(query, category);
+
+    function matches(entry: ContentEntry) {
+      const q = query.trim().toLowerCase();
+      if (!q) return true;
+      return `${entry.name} ${entry.type} ${entry.desc} ${entry.building}`
+        .toLowerCase()
+        .includes(q);
+    }
+  }, [fromId, category, query]);
+
+  return (
+    <div className="space-y-3">
+      <div className="relative">
+        <Search
+          className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+          aria-hidden
+        />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="где ближайшее кафе…"
+          aria-label="Поиск по зданию"
+          className="pl-9"
+        />
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setCategory("all")}
+          className={cn(
+            "rounded-full border px-3 py-1 text-sm transition-colors",
+            category === "all"
+              ? "bg-primary text-primary-foreground"
+              : "hover:bg-accent"
+          )}
+        >
+          Всё
+        </button>
+        {CONTENT_CATEGORIES.filter((c) => c.id !== "other").map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => setCategory(c.id)}
+            className={cn(
+              "rounded-full border px-3 py-1 text-sm transition-colors",
+              category === c.id
+                ? "bg-primary text-primary-foreground"
+                : "hover:bg-accent"
+            )}
+          >
+            {c.title}
+          </button>
+        ))}
+      </div>
+      {results.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          Ничего не найдено. Попробуйте другую категорию или слово.
+        </p>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {results.slice(0, 12).map((entry) => (
+            <EntryCard
+              key={entry.id}
+              entry={entry}
+              hops={"hops" in entry ? (entry as any).hops : undefined}
+              onPick={onPick}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
