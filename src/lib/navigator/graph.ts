@@ -580,7 +580,7 @@ function buildSteps(graph: Graph, path: number[]): RouteStep[] {
       turn === 1 ? "right" : turn === 3 ? "left" : turn === 2 ? "back" : "straight";
     const photo =
       v.square?.name === "Зона отдыха"
-        ? "/orientir/images/plan/3/garden1_forward.jpg"
+        ? "orientir/images/plan/3/garden1_forward.jpg"
         : undefined;
     steps.push({
       icon,
