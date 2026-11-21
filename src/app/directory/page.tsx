@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ContentCatalog } from "@/components/navigator/content-catalog";
+import { DirectoryView } from "@/components/navigator/directory-view";
 import { DirectoryHeader, SiteLogo } from "@/components/site-header";
 import { buildContentEntries } from "@/lib/navigator/content";
 import { listPlaces } from "@/lib/navigator/graph";
@@ -18,7 +18,7 @@ export default function DirectoryPage() {
       <SiteLogo />
       <main>
         <DirectoryHeader />
-        <ContentCatalog entries={entries} />
+        <DirectoryView entries={entries} />
       </main>
     </div>
   );
