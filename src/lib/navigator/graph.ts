@@ -75,6 +75,8 @@ export interface Place {
   name: string;
   kind: PlaceKind;
   floor: number;
+  // Тип ориентира из XML плана, только для kind = "orient".
+  orientType?: string;
   // Где точку искать: зона и сторона, например «Лестничная площадка № 1, впереди».
   description?: string;
 }
@@ -355,6 +357,10 @@ export function listPlaces(): Place[] {
       const where = sidePhrase(v.side, parent.square?.kind === "corridor");
       description = [zone, where].filter(Boolean).join(", ");
     }
+    const orientType =
+      v.kind === "object" && v.object?.kind === "orient"
+        ? v.object.type
+        : undefined;
     places.push({
       id: v.key,
       name: v.label,
@@ -365,6 +371,7 @@ export function listPlaces(): Place[] {
             ? "orient"
             : v.object!.kind,
       floor: v.floor,
+      orientType,
       description: description || undefined,
     });
   }

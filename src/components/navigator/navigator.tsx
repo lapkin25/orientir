@@ -306,9 +306,17 @@ function Catalog({
   );
 }
 
-export function Navigator({ places }: { places: Place[] }) {
-  const [from, setFrom] = useState<Place | null>(null);
-  const [to, setTo] = useState<Place | null>(null);
+export function Navigator({
+  places,
+  initialFrom = null,
+  initialTo = null,
+}: {
+  places: Place[];
+  initialFrom?: Place | null;
+  initialTo?: Place | null;
+}) {
+  const [from, setFrom] = useState<Place | null>(initialFrom);
+  const [to, setTo] = useState<Place | null>(initialTo);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<RouteResult | null>(null);
   const [resetKey, setResetKey] = useState(0);
