@@ -190,8 +190,7 @@ const DIRECTION_LABEL: Record<NodeLandmark["direction"], string> = {
 };
 
 function RouteNodeCard({ node }: { node: RouteNode }) {
-  const [schemeOpen, setSchemeOpen] = useState(false);
-  if (node.landmarks.length === 0 && !node.scheme) return null;
+  if (node.landmarks.length === 0) return null;
 
   return (
     <div className="mt-2 rounded-[10px] border-2 border-primary/80 bg-card px-3 py-2">
@@ -203,18 +202,6 @@ function RouteNodeCard({ node }: { node: RouteNode }) {
             <span className="text-white/70">, {node.floor} этаж</span>
           </span>
         </p>
-        {node.scheme && (
-          <button
-            type="button"
-            aria-label="Путевая схема"
-            title="Путевая схема"
-            aria-expanded={schemeOpen}
-            onClick={() => setSchemeOpen((v) => !v)}
-            className={STEP_BUTTON}
-          >
-            <MapIcon className="h-7 w-7" strokeWidth={2} aria-hidden />
-          </button>
-        )}
       </div>
       {node.landmarks.length > 0 && (
         <ul aria-label="Ближайшие ориентиры" className="mt-1 space-y-1">
@@ -238,15 +225,6 @@ function RouteNodeCard({ node }: { node: RouteNode }) {
           })}
         </ul>
       )}
-      {schemeOpen && node.scheme && (
-        <Image
-          src={`/${node.scheme}`}
-          alt={`Путевая схема: ${node.name}`}
-          width={640}
-          height={360}
-          className="mt-2 w-full rounded-[10px] object-cover"
-        />
-      )}
     </div>
   );
 }
@@ -260,6 +238,8 @@ function RouteStepItem({
 }) {
   const [photoOpen, setPhotoOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [schemeOpen, setSchemeOpen] = useState(false);
+  const scheme = step.node?.scheme;
   const showMacro = step.map?.kind === "square" && !!step.map.macro && !arrived;
   const hasDetail = !!step.detail || !!step.map;
 
@@ -281,6 +261,18 @@ function RouteStepItem({
             <Search className="h-7 w-7" strokeWidth={2.25} aria-hidden />
           </button>
         )}
+        {scheme && (
+          <button
+            type="button"
+            aria-label="Карта: показать путевую схему"
+            title="Путевая схема"
+            aria-expanded={schemeOpen}
+            onClick={() => setSchemeOpen((v) => !v)}
+            className={STEP_BUTTON}
+          >
+            <MapIcon className="h-7 w-7" strokeWidth={2} aria-hidden />
+          </button>
+        )}
         {hasDetail && (
           <button
             type="button"
@@ -295,6 +287,20 @@ function RouteStepItem({
         )}
       </div>
       {step.node && <RouteNodeCard node={step.node} />}
+      {schemeOpen && scheme && step.node && (
+        <figure className="mt-1 space-y-1 border-l-2 border-accent px-2 py-1">
+          <Image
+            src={`/${scheme}`}
+            alt={`Путевая схема: ${step.node.name}`}
+            width={640}
+            height={360}
+            className="w-full rounded-[10px] object-contain"
+          />
+          <figcaption className="text-base text-white/85">
+            Путевая схема: {step.node.name}, {step.node.floor} этаж
+          </figcaption>
+        </figure>
+      )}
       {photoOpen && step.photo && (
         <figure className="mt-1 space-y-1 border-l-2 border-accent px-2 py-1">
           <Image

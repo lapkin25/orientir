@@ -65,6 +65,20 @@ export interface StairsMapData {
 
 export type StepMap = SquareMapData | CorridorMapData | StairsMapData;
 
+export interface NodeLandmark {
+  label: string;
+  direction: "forward" | "right" | "back" | "left";
+}
+
+// Узловая точка маршрута — площадка, где меняется направление:
+// указатель ближайших ориентиров относительно пользователя и фото путевой схемы.
+export interface RouteNode {
+  name: string;
+  floor: number;
+  landmarks: NodeLandmark[];
+  scheme?: string;
+}
+
 export interface RouteStep {
   icon: StepIcon;
   text: string;
@@ -72,6 +86,7 @@ export interface RouteStep {
   photo?: string;
   photoNote?: string;
   map?: StepMap;
+  node?: RouteNode;
 }
 
 export interface RouteResult {
@@ -495,6 +510,57 @@ function floorPhrase(floor: number): string {
   return floor <= 0 ? "в цоколь" : `на ${floor} этаж`;
 }
 
+// Фото путевых схем узловых точек: id площадки из плана → путь к фото
+// внутри public. Для новой схемы достаточно положить фото в public/images/scheme
+// и добавить строку сюда.
+const NODE_SCHEMES: Record<string, string> = {
+  landing_1: "orientir/images/scheme/3/underground.jpg",
+  square_2: "orientir/images/scheme/3/underground.jpg",
+  square_rest: "orientir/images/plan/3/garden1_forward.jpg",
+};
+
+// Не считаем ключевыми ориентирами мелочи, по которым трудно свериться.
+const MINOR_ORIENTS = new Set(["trash_bin", "fire_extinguisher", "door"]);
+const NODE_DIRECTIONS: NodeLandmark["direction"][] = [
+  "forward",
+  "right",
+  "back",
+  "left",
+];
+
+function routeNode(
+  graph: Graph,
+  squareIdx: number,
+  standSide: Dir | ""
+): RouteNode | undefined {
+  const V = graph.vertices;
+  const v = V[squareIdx];
+  if (!v.square || v.square.kind !== "square") return undefined;
+  const standIndex = standSide ? SIDE_INDEX[standSide] : -1;
+  const facing = standIndex >= 0 ? (standIndex + 2) % 4 : 0;
+  const landmarks: NodeLandmark[] = [];
+  for (const i of graph.objectsBySquare.get(squareIdx) ?? []) {
+    const obj = V[i];
+    const base = obj.object ? objectBaseLabel(obj.object) : "";
+    if (!base) continue;
+    if (obj.object?.kind === "orient" && MINOR_ORIENTS.has(obj.object.type)) continue;
+    const sideIdx = SIDE_INDEX[obj.side];
+    if (sideIdx === undefined) continue;
+    landmarks.push({
+      label: base,
+      direction: NODE_DIRECTIONS[(sideIdx - facing + 4) % 4],
+    });
+  }
+  const order = { forward: 0, left: 1, right: 2, back: 3 };
+  landmarks.sort((a, b) => order[a.direction] - order[b.direction]);
+  return {
+    name: squareContext(v.square),
+    floor: v.floor,
+    landmarks: landmarks.slice(0, 5),
+    scheme: NODE_SCHEMES[v.square.id],
+  };
+}
+
 function buildSteps(graph: Graph, path: number[]): RouteStep[] {
   const V = graph.vertices;
   const steps: RouteStep[] = [];
@@ -588,6 +654,7 @@ function buildSteps(graph: Graph, path: number[]): RouteStep[] {
       detail: landmarkDetail(graph, idx, new Set([entryIdx, exitIdx]), true),
       photo,
       photoNote: photo ? "Зона отдыха на 4 этаже" : undefined,
+      node: routeNode(graph, idx, entryV ? entryV.side : ""),
       map:
         v.square && v.square.kind === "square"
           ? {
