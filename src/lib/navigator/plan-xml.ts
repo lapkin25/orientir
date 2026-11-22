@@ -72,7 +72,7 @@ export const planXML = `<Plan object="VVSU">
                     <Joint id="6" text="Поворот" to="поворота"/>
                 </Side>
             </Square>
-            <Square id="square_rest" name="Зона отдыха" to="зоны отдыха" cat="rest">
+            <Square id="square_rest" name="Зона отдыха" to="зоны отдыха" cat="rest" desc="Два дивана по бокам, можно присесть и подождать. Окно впереди — ориентир на дневной свет.">
                 <Side dir="backward" type="free">
                     <Joint id="6" text="Поворот" to="поворота"/>
                 </Side>
@@ -128,7 +128,7 @@ export const planXML = `<Plan object="VVSU">
                     <Part type="wall"/>
                 </Side>
             </Square>
-            <Corridor id="corridor_201" start="203" finish="204" name="Коридор" to="коридора">
+            <Corridor id="corridor_201" start="203" finish="204" name="Коридор" to="коридора" desc="Длинный коридор с аудиториями по обе стороны. В конце — выход к центральному входу." photo="images/plan/2/rector_gallery_corridor.jpg">
                 <Room wall="right" num="1201"/>
                 <Room wall="right" num="1203" name="Директор института сервиса, моды и дизайна" to="директора института сервиса, моды и дизайна"/>
                 <Room wall="right" num="1205" name="Методический кабинет" to="методического кабинета"/>
@@ -142,7 +142,7 @@ export const planXML = `<Plan object="VVSU">
                 <Room wall="right" num="1215а"/>
                 <Room wall="left" num="1216" name="Кафедра дизайна и технологий" to="кафедры дизайна и технологий"/>
                 <Room wall="left" num="1218а" name="Служба снабжения" to="службы снабжения"/>
-                <Room wall="right" num="1219" name="Студенческий офис" to="студенческого офиса"/>
+                <Room wall="right" num="1219" name="Студенческий офис" to="студенческого офиса" desc="Обращаться по вопросам зачётов, справок и расписания."/>
                 <Room wall="right" num="1221" name="Отдел заочного обучения и дистанционных технологий" to="отдела заочного обучения и дистанционных технологий"/>
                 <Room wall="right" num="1221а"/>
                 <Room wall="right" num="1223" name="Директор департамента маркетинга и информационной политики" to="директора департамента маркетинга и информационной политики"/>
@@ -247,7 +247,7 @@ export const planXML = `<Plan object="VVSU">
                 <Room wall="left" num="1358" name="Департамент маркетинга и информационной политики" to="департамента маркетинга и информационной политики"/>
                 <Room wall="right" num="1359"/>
                 <Room wall="right" num="1359а"/>
-                <Room wall="left" num="1360" name="Ректорат" to="ректората"/>
+                <Room wall="left" num="1360" name="Ректорат" to="ректората" desc="Приёмная ректора. Кabinеты 1360–1378 — весь ректорат на этом этаже."/>
                 <Room wall="right" num="1361" name="Ректорат" to="ректората"/>
                 <Room wall="left" num="1362" name="Ректорат" to="ректората"/>
                 <Room wall="right" num="1363" name="Ректорат" to="ректората"/>
@@ -265,7 +265,7 @@ export const planXML = `<Plan object="VVSU">
         <Stairs id="staircase_2_3" start_id="201" finish_id="301" building="1"/>
         <Stairs id="staircase_3_4" start_id="302" finish_id="1" building="1"/>
     </Block>
-    <!-- (заглушка) Выходы из здания: тупиковые стыки на концах коридоров. -->
-    <Exit id="204" text="Центральный вход" to="центрального входа"/>
-    <Exit id="304" text="Вход через зимний сад" to="входа через зимний сад"/>
+    <!-- Выходы из здания: тупиковые стыки на концах коридоров. -->
+    <Exit id="204" text="Центральный вход" to="центрального входа" desc="Главный вход в здание. Через вестибюль и лестницу — на любой этаж."/>
+    <Exit id="304" text="Вход через зимний сад" to="входа через зимний сад" desc="Запасный вход со стороны зимнего сада. Удобно, если пришли со двора." photo="orientir/images/plan/3/garden1_forward.jpg"/>
 </Plan>`;

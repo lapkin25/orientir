@@ -9,6 +9,8 @@ export interface Section {
   floor: number;
   zones: string[];
   entry: string;
+  desc?: string;
+  photo?: string;
 }
 
 export const SECTIONS: Section[] = [

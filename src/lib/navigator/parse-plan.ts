@@ -7,9 +7,9 @@ export type Dir = "forward" | "backward" | "left" | "right";
 export const DIRECTIONS: Dir[] = ["forward", "backward", "left", "right"];
 
 export type SideObject =
-  | { kind: "joint"; id: string; text: string; to: string; photo: string }
-  | { kind: "orient"; type: string; name: string; to: string }
-  | { kind: "room"; num: string; name: string; to: string };
+  | { kind: "joint"; id: string; text: string; to: string; photo: string; desc: string }
+  | { kind: "orient"; type: string; name: string; to: string; photo: string; desc: string }
+  | { kind: "room"; num: string; name: string; to: string; photo: string; desc: string };
 
 export interface SquareSide {
   dir: Dir;
@@ -25,6 +25,8 @@ export interface ParsedSquare {
   building: string;
   floor: number;
   sides: SquareSide[];
+  desc: string;
+  photo: string;
 }
 
 export interface CorridorObject {
@@ -42,6 +44,8 @@ export interface ParsedCorridor {
   start: string;
   finish: string;
   objects: CorridorObject[];
+  desc: string;
+  photo: string;
 }
 
 // Лестница — площадка между двумя стыками на разных этажах:
@@ -66,6 +70,7 @@ export interface ParsedExit {
   text: string;
   to: string;
   photo: string;
+  desc: string;
 }
 
 export interface ParsedPlan {
@@ -145,6 +150,7 @@ function readSideObject(element: XmlElement): SideObject | null {
       text: attr(element, "text"),
       to: attr(element, "to"),
       photo: attr(element, "photo"),
+      desc: attr(element, "desc"),
     };
   }
   if (element.tag === "Orient") {
@@ -153,6 +159,8 @@ function readSideObject(element: XmlElement): SideObject | null {
       type: attr(element, "type"),
       name: attr(element, "name"),
       to: attr(element, "to"),
+      photo: attr(element, "photo"),
+      desc: attr(element, "desc"),
     };
   }
   if (element.tag === "Room") {
@@ -161,6 +169,8 @@ function readSideObject(element: XmlElement): SideObject | null {
       num: attr(element, "num"),
       name: attr(element, "name"),
       to: attr(element, "to"),
+      photo: attr(element, "photo"),
+      desc: attr(element, "desc"),
     };
   }
   return null;
@@ -203,6 +213,8 @@ function readSquare(element: XmlElement, building: string, floor: number): Parse
     building,
     floor,
     sides,
+    desc: attr(element, "desc"),
+    photo: attr(element, "photo"),
   };
 }
 
@@ -233,6 +245,8 @@ function readCorridor(
     start: attr(element, "start"),
     finish: attr(element, "finish"),
     objects,
+    desc: attr(element, "desc"),
+    photo: attr(element, "photo"),
   };
 }
 
@@ -261,6 +275,7 @@ function readExit(element: XmlElement): ParsedExit {
     text: attr(element, "text"),
     to: attr(element, "to"),
     photo: attr(element, "photo"),
+    desc: attr(element, "desc"),
   };
 }
 

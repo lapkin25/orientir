@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,15 @@ function EntryCard({ entry }: { entry: ContentEntry }) {
   return (
     <Card className="rounded-[10px] border-2 border-primary/80 bg-card shadow-none">
       <CardContent className="space-y-3 p-4">
+        {entry.photo && (
+          <Image
+            src={`/${entry.photo}`}
+            alt={entry.name}
+            width={640}
+            height={360}
+            className="w-full rounded-[10px] object-cover"
+          />
+        )}
         <div className="space-y-1">
           <p className="text-xl leading-snug">{entry.name}</p>
           <p className="text-base text-muted-foreground">Тип: {typeLabel}</p>
@@ -37,6 +47,11 @@ function EntryCard({ entry }: { entry: ContentEntry }) {
                 : `, ${entry.location}`
               : ""}
           </p>
+          {entry.desc && (
+            <p className="pt-1 text-base leading-snug text-white/90">
+              {entry.desc}
+            </p>
+          )}
         </div>
         <Button asChild className="h-12 w-full rounded-full border-2 border-primary/80 bg-card text-lg text-white hover:border-accent hover:bg-card hover:text-accent">
           <Link href={`/?to=${encodeURIComponent(entry.id)}`}>

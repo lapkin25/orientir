@@ -98,6 +98,10 @@ export interface ContentEntry {
   category: string;
   // Где точку искать: зона и сторона.
   location?: string;
+  // Необязательное описание для карточки в справочнике.
+  desc?: string;
+  // Необязательное фото (путь внутри public) для карточки в справочнике.
+  photo?: string;
 }
 
 export function categorize(
@@ -129,6 +133,8 @@ export function buildContentEntries(places: Place[]): ContentEntry[] {
     floor: place.floor,
     category: categorize(place),
     location: place.description,
+    desc: place.desc,
+    photo: place.photo,
   }));
 }
 

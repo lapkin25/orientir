@@ -115,6 +115,10 @@ export interface Place {
   orientType?: string;
   // Где точку искать: зона и сторона, например «Лестничная площадка № 1, впереди».
   description?: string;
+  // Необязательное описание места для карточки в справочнике.
+  desc?: string;
+  // Необязательное фото места (путь внутри public) для карточки в справочнике.
+  photo?: string;
 }
 
 type SideMark = Dir | "";
@@ -464,6 +468,18 @@ export function listPlaces(): Place[] {
       v.kind === "object" && v.object?.kind === "orient"
         ? v.object.type
         : undefined;
+    const desc =
+      v.kind === "square"
+        ? v.square?.desc
+        : v.kind === "exit"
+          ? v.exit?.desc
+          : v.object?.desc;
+    const photo =
+      v.kind === "square"
+        ? v.square?.photo
+        : v.kind === "exit"
+          ? v.exit?.photo
+          : v.object?.photo;
     places.push({
       id: v.key,
       name: v.label,
@@ -478,6 +494,8 @@ export function listPlaces(): Place[] {
       floor: v.floor,
       orientType,
       description: description || undefined,
+      desc: desc || undefined,
+      photo: photo || undefined,
     });
   }
   for (const section of SECTIONS) {
@@ -495,6 +513,8 @@ export function listPlaces(): Place[] {
       kind: "section",
       floor: section.floor,
       description: zoneNames.length > 0 ? zoneNames.join(", ") : undefined,
+      desc: section.desc,
+      photo: section.photo,
     });
   }
   places.sort((a, b) => {
