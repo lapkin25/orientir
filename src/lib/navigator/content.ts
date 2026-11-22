@@ -151,7 +151,7 @@ export function searchContent(
       entry.category === "other"
         ? KIND_LABELS[entry.kind]
         : (CONTENT_CATEGORY_TITLES.get(entry.category) ?? "Прочее");
-    return [entry.name, entry.location, label]
+    return [entry.name, entry.location, entry.desc, label]
       .filter(Boolean)
       .join(" ")
       .toLowerCase()
