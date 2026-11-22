@@ -265,4 +265,7 @@ export const planXML = `<Plan object="VVSU">
         <Stairs id="staircase_2_3" start_id="201" finish_id="301" building="1"/>
         <Stairs id="staircase_3_4" start_id="302" finish_id="1" building="1"/>
     </Block>
+    <!-- (заглушка) Выходы из здания: тупиковые стыки на концах коридоров. -->
+    <Exit id="204" text="Центральный вход" to="центрального входа"/>
+    <Exit id="304" text="Вход через зимний сад" to="входа через зимний сад"/>
 </Plan>`;

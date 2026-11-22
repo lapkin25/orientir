@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { MapPin, Search } from "lucide-react";
+import { DoorOpen, MapPin, Search } from "lucide-react";
 import type { Place } from "@/lib/navigator/graph";
 
 const MAX_RESULTS = 30;
@@ -11,6 +11,11 @@ const MAX_RESULTS = 30;
 // и эта точка подставляется в поле «Откуда» навигатора.
 export function LocationSearch({ places }: { places: Place[] }) {
   const [query, setQuery] = useState("");
+
+  const entrances = useMemo(
+    () => places.filter((place) => place.kind === "exit"),
+    [places]
+  );
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -28,6 +33,26 @@ export function LocationSearch({ places }: { places: Place[] }) {
       <p className="text-lg text-white/90">
         Где вы сейчас? Введите номер аудитории или ближайший ориентир.
       </p>
+      {entrances.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-base text-white/80">Вы входите в здание?</p>
+          <div className="grid gap-2">
+            {entrances.map((place) => (
+              <Link
+                key={place.id}
+                href={`/?from=${encodeURIComponent(place.id)}`}
+                className="flex items-center gap-3 rounded-[10px] border-2 border-primary/80 bg-card px-3 py-3 transition-colors hover:border-accent focus-visible:border-accent focus-visible:outline-none"
+              >
+                <DoorOpen className="h-6 w-6 shrink-0 text-primary" aria-hidden />
+                <span className="min-w-0 flex-1 text-lg leading-snug">
+                  {place.name}
+                </span>
+                <span className="shrink-0 text-base text-accent">Я здесь</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="relative">
         <Search
           className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground"

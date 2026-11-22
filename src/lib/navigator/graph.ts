@@ -5,6 +5,7 @@ import {
   parsePlan,
   type Dir,
   type ParsedCorridor,
+  type ParsedExit,
   type ParsedPlan,
   type ParsedSquare,
   type ParsedStairs,
@@ -97,7 +98,13 @@ export interface RouteResult {
   steps: RouteStep[];
 }
 
-export type PlaceKind = "room" | "orient" | "square" | "corridor" | "section";
+export type PlaceKind =
+  | "room"
+  | "orient"
+  | "square"
+  | "corridor"
+  | "section"
+  | "exit";
 
 export interface Place {
   id: string;
@@ -114,7 +121,7 @@ type SideMark = Dir | "";
 
 interface Vertex {
   key: string;
-  kind: "square" | "joint" | "object" | "stairs";
+  kind: "square" | "joint" | "object" | "stairs" | "exit";
   label: string;
   to: string;
   floor: number;
@@ -127,6 +134,7 @@ interface Vertex {
   square?: ParsedSquare | ParsedCorridor;
   object?: SideObject;
   stairs?: ParsedStairs;
+  exit?: ParsedExit;
 }
 
 interface Graph {
@@ -351,6 +359,50 @@ function buildGraph(): Graph {
     }
   }
 
+  // Выходы из здания — тупиковые точки: у стыка с тем же id
+  // или на конце коридора, чей start/finish совпадает с id.
+  for (const exit of plan.exits) {
+    const targets: number[] = [];
+    let floor = Number.NaN;
+    const jointList = jointsById.get(exit.id);
+    if (jointList && jointList.length > 0) {
+      for (const jointIdx of jointList) {
+        targets.push(jointIdx);
+      }
+      floor = vertices[jointList[0]].floor;
+    } else {
+      const corridor = [...plan.squares, ...plan.corridors].find(
+        (zone) =>
+          zone.kind === "corridor" &&
+          (zone.start === exit.id || zone.finish === exit.id)
+      );
+      if (corridor && corridor.kind === "corridor") {
+        const corridorIdx = byKey.get(`sq:${corridor.id}`);
+        if (corridorIdx !== undefined) {
+          targets.push(corridorIdx);
+          floor = vertices[corridorIdx].floor;
+        }
+      }
+    }
+    if (targets.length === 0 || !Number.isFinite(floor)) continue;
+    const exitIdx = addVertex({
+      key: `exit:${exit.id}`,
+      kind: "exit",
+      label: uniqueLabel(exit.text || "Выход", "выход"),
+      to: exit.to,
+      floor,
+      neighbors: [],
+      inCatalog: true,
+      parentSquare: -1,
+      side: "",
+      jointId: "",
+      exit,
+    });
+    for (const target of targets) {
+      connect(exitIdx, target);
+    }
+  }
+
   return { vertices, byKey, objectsBySquare };
 }
 
@@ -394,6 +446,19 @@ export function listPlaces(): Place[] {
         parent.label || (parent.square ? squareContext(parent.square) : "");
       const where = sidePhrase(v.side, parent.square?.kind === "corridor");
       description = [zone, where].filter(Boolean).join(", ");
+    } else if (v.kind === "exit") {
+      for (const n of v.neighbors) {
+        const nv = graph.vertices[n];
+        const zone = nv.square
+          ? nv.square
+          : nv.kind === "joint" && nv.parentSquare >= 0
+            ? graph.vertices[nv.parentSquare].square
+            : undefined;
+        if (zone) {
+          description = squareContext(zone);
+          break;
+        }
+      }
     }
     const orientType =
       v.kind === "object" && v.object?.kind === "orient"
@@ -405,9 +470,11 @@ export function listPlaces(): Place[] {
       kind:
         v.kind === "square"
           ? v.square!.kind
-          : v.object!.kind === "joint"
-            ? "orient"
-            : v.object!.kind,
+          : v.kind === "exit"
+            ? "exit"
+            : v.object!.kind === "joint"
+              ? "orient"
+              : v.object!.kind,
       floor: v.floor,
       orientType,
       description: description || undefined,
@@ -704,7 +771,13 @@ function buildSteps(graph: Graph, path: number[]): RouteStep[] {
       }
     }
   }
-  steps.push({ icon: "finish", text: "Вы на месте!", detail });
+  steps.push({
+    icon: "finish",
+    text: "Вы на месте!",
+    detail,
+    photo: dest.exit?.photo || undefined,
+    photoNote: dest.exit?.photo ? dest.label : undefined,
+  });
   return steps;
 }
 

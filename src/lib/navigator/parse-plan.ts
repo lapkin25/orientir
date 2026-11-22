@@ -58,10 +58,21 @@ export interface ParsedStairs {
   width: string;
 }
 
+// Выход из здания — тупиковый стык: <Exit id="…" text="…" to="…"/>.
+// Подпись и фотография, как у стыка, показываются на входе в точку.
+export interface ParsedExit {
+  kind: "exit";
+  id: string;
+  text: string;
+  to: string;
+  photo: string;
+}
+
 export interface ParsedPlan {
   squares: ParsedSquare[];
   corridors: ParsedCorridor[];
   stairs: ParsedStairs[];
+  exits: ParsedExit[];
 }
 
 interface XmlElement {
@@ -243,6 +254,16 @@ function readStairs(element: XmlElement, building: string): ParsedStairs | null 
   };
 }
 
+function readExit(element: XmlElement): ParsedExit {
+  return {
+    kind: "exit",
+    id: attr(element, "id"),
+    text: attr(element, "text"),
+    to: attr(element, "to"),
+    photo: attr(element, "photo"),
+  };
+}
+
 function readBlock(
   element: XmlElement,
   building: string,
@@ -275,10 +296,15 @@ export function parsePlan(xml: string): ParsedPlan {
   if (!planElement) {
     throw new Error("В плане нет корневого тега <Plan>");
   }
-  const plan: ParsedPlan = { squares: [], corridors: [], stairs: [] };
+  const plan: ParsedPlan = { squares: [], corridors: [], stairs: [], exits: [] };
   for (const child of planElement.children) {
     if (child.tag === "Block") {
       readBlock(child, "", Number.NaN, plan);
+    } else if (child.tag === "Exit") {
+      const exit = readExit(child);
+      if (exit.id) {
+        plan.exits.push(exit);
+      }
     }
   }
   return plan;
