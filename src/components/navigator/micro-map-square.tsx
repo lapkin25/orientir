@@ -100,20 +100,13 @@ export function MicroMapSquare({ map }: { map: SquareMapData }) {
               {TURN_WORD[turn]}
             </span>
           </div>
-          {!standSide && (
-            <span className="absolute bottom-1 flex items-center gap-1 text-xs text-muted-foreground">
-              <Footprints className="h-3 w-3" aria-hidden /> вы здесь
-            </span>
-          )}
         </div>
         {horizontal(1)}
         <div />
         <div className="space-y-1">
-          {standSide && (
-            <p className="flex items-center justify-center gap-1 text-xs font-medium text-primary">
-              <Footprints className="h-3 w-3" aria-hidden /> вы здесь
-            </p>
-          )}
+          <p className="mx-auto flex w-fit items-center justify-center gap-1 rounded-full border border-primary/60 bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+            <Footprints className="h-3 w-3" aria-hidden /> вы здесь
+          </p>
           {vertical(2)}
         </div>
         <div />

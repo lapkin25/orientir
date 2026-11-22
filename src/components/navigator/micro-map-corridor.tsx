@@ -2,6 +2,10 @@ import { DoorOpen, Flag } from "lucide-react";
 import type { CorridorMapData } from "@/lib/navigator/graph";
 import type { CorridorObject } from "@/lib/navigator/parse-plan";
 
+// Сколько ориентиров вдоль стены показываем сразу; остальные — по запросу,
+// чтобы длинный коридор не превращался в нечитаемую простыню.
+const VISIBLE_LIMIT = 6;
+
 function objectLabel(entry: CorridorObject): string {
   const obj = entry.object;
   if (obj.kind === "joint") return obj.text || "Стык";
@@ -9,6 +13,53 @@ function objectLabel(entry: CorridorObject): string {
   if (obj.name && obj.num) return `${obj.name} (${obj.num})`;
   if (obj.name) return obj.name;
   return obj.num ? `Ауд. ${obj.num}` : "";
+}
+
+function WallList({ labels }: { labels: string[] }) {
+  if (labels.length === 0) {
+    return <p className="mt-1 text-sm text-muted-foreground">—</p>;
+  }
+  const visible = labels.slice(0, VISIBLE_LIMIT);
+  const hidden = labels.slice(VISIBLE_LIMIT);
+  return (
+    <>
+      <ul className="mt-1 space-y-1">
+        {visible.map((label, index) => (
+          <li
+            key={`${label}-${index}`}
+            className="flex items-start gap-1 text-sm leading-tight"
+          >
+            <DoorOpen
+              className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground"
+              aria-hidden
+            />
+            <span>{label}</span>
+          </li>
+        ))}
+      </ul>
+      {hidden.length > 0 && (
+        <details className="mt-1">
+          <summary className="cursor-pointer text-xs font-medium text-primary hover:underline">
+            Ещё {hidden.length}
+          </summary>
+          <ul className="mt-1 space-y-1">
+            {hidden.map((label, index) => (
+              <li
+                key={`${label}-${index}`}
+                className="flex items-start gap-1 text-sm leading-tight"
+              >
+                <DoorOpen
+                  className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground"
+                  aria-hidden
+                />
+                <span>{label}</span>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </>
+  );
 }
 
 export function MicroMapCorridor({ map }: { map: CorridorMapData }) {
@@ -38,47 +89,13 @@ export function MicroMapCorridor({ map }: { map: CorridorMapData }) {
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             По левую руку
           </p>
-          <ul className="mt-1 space-y-1">
-            {walls.left.length === 0 ? (
-              <li className="text-sm text-muted-foreground">—</li>
-            ) : (
-              walls.left.map((label, index) => (
-                <li
-                  key={`${label}-${index}`}
-                  className="flex items-start gap-1 text-sm leading-tight"
-                >
-                  <DoorOpen
-                    className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground"
-                    aria-hidden
-                  />
-                  <span>{label}</span>
-                </li>
-              ))
-            )}
-          </ul>
+          <WallList labels={walls.left} />
         </div>
         <div className="rounded-md border bg-background p-2">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             По правую руку
           </p>
-          <ul className="mt-1 space-y-1">
-            {walls.right.length === 0 ? (
-              <li className="text-sm text-muted-foreground">—</li>
-            ) : (
-              walls.right.map((label, index) => (
-                <li
-                  key={`${label}-${index}`}
-                  className="flex items-start gap-1 text-sm leading-tight"
-                >
-                  <DoorOpen
-                    className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground"
-                    aria-hidden
-                  />
-                  <span>{label}</span>
-                </li>
-              ))
-            )}
-          </ul>
+          <WallList labels={walls.right} />
         </div>
       </div>
       <p className="mt-2 flex items-center gap-1 text-xs font-medium">
