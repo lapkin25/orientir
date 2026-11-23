@@ -64,7 +64,7 @@ export function DirectoryHeader({ title = "Справочник" }: { title?: st
       >
         <ArrowLeft className="h-7 w-7" aria-hidden />
       </Link>
-      <h1 className="mx-auto pr-12 text-2xl font-normal">{title}</h1>
+      <h1 className="mx-auto min-w-0 break-words text-xl font-normal min-[400px]:pr-12 min-[400px]:text-2xl">{title}</h1>
     </header>
   );
 }

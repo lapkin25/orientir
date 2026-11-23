@@ -31,7 +31,7 @@ function objectLabel(obj: SideObject): string {
 function SlotChips({ labels, isExit }: { labels: string[]; isExit: boolean }) {
   if (labels.length === 0) return null;
   return (
-    <div className="flex flex-wrap items-center justify-center gap-1">
+    <div className="flex min-w-0 flex-wrap items-center justify-center gap-1 [overflow-wrap:anywhere]">
       {labels.map((label, index) => (
         <span
           key={`${label}-${index}`}
@@ -84,12 +84,12 @@ export function MicroMapSquare({ map }: { map: SquareMapData }) {
           · {square.building}, {square.floor} этаж
         </span>
       </p>
-      <div className="mx-auto mt-2 grid max-w-[300px] grid-cols-[minmax(4.5rem,1fr)_auto_minmax(4.5rem,1fr)] items-center gap-x-2 gap-y-1.5">
+      <div className="mx-auto mt-2 grid max-w-[300px] grid-cols-[minmax(0,1fr)_5rem_minmax(0,1fr)] items-center gap-x-2 gap-y-1.5 min-[400px]:grid-cols-[minmax(0,1fr)_6rem_minmax(0,1fr)]">
         <div />
         {vertical(0)}
         <div />
         {horizontal(3)}
-        <div className="relative flex h-24 w-24 items-center justify-center rounded-md border-2 border-border bg-background">
+        <div className="relative flex h-20 w-full items-center justify-center rounded-md border-2 border-border bg-background min-[400px]:h-24">
           <div className="flex flex-col items-center gap-1">
             <Navigation2
               className="h-5 w-5 text-primary"
@@ -104,7 +104,7 @@ export function MicroMapSquare({ map }: { map: SquareMapData }) {
         {horizontal(1)}
         <div />
         <div className="space-y-1">
-          <p className="mx-auto flex w-fit items-center justify-center gap-1 rounded-full border border-primary/60 bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+          <p className="mx-auto flex w-full items-center justify-center gap-1 rounded-full border border-primary/60 bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
             <Footprints className="h-3 w-3" aria-hidden /> вы здесь
           </p>
           {vertical(2)}

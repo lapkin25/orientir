@@ -33,7 +33,7 @@ function WallList({ labels }: { labels: string[] }) {
               className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground"
               aria-hidden
             />
-            <span>{label}</span>
+            <span className="min-w-0 [overflow-wrap:anywhere]">{label}</span>
           </li>
         ))}
       </ul>
@@ -52,7 +52,7 @@ function WallList({ labels }: { labels: string[] }) {
                   className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground"
                   aria-hidden
                 />
-                <span>{label}</span>
+                <span className="min-w-0 [overflow-wrap:anywhere]">{label}</span>
               </li>
             ))}
           </ul>
